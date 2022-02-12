@@ -54,6 +54,16 @@
             "items": {
                 "type": "integer"
             }
+        },
+        "arrayOfArrays": {
+            "description": "This is an array of arrays of integers",
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "integer"
+                }
+            }
         }
     },
     "required": [

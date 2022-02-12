@@ -44,11 +44,19 @@ export class TestObject {
     // enum-like value int
     variableE?: number;
 
-    constructor(In_variableB: string, In_variableD: string, In_variableC?: OtherTestObject, In_variableE?: number, In_variableA: number = 24) {
+    // This is an array of integers
+    arrayVariable?: Array<number>;
+
+    // This is an array of arrays of integers
+    arrayOfArrays?: Array<Array<number>>;
+
+    constructor(In_variableB: string, In_variableD: string, In_variableC?: OtherTestObject, In_variableE?: number, In_arrayVariable?: Array<number>, In_arrayOfArrays?: Array<Array<number>>, In_variableA: number = 24) {
         this.variableB = In_variableB;
         this.variableD = In_variableD;
         this.variableC = In_variableC;
         this.variableE = In_variableE;
+        this.arrayVariable = In_arrayVariable;
+        this.arrayOfArrays = In_arrayOfArrays;
         this.variableA = In_variableA;
     }
 

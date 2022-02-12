@@ -432,17 +432,17 @@ class Spec:
             any_of_variables = []
 
             for variableName in properties:
-                variableProperty: dict = properties[variableName]
+                variable_property: dict = properties[variableName]
 
                 def resolve_variable_type_and_possible_values() -> Tuple[List[str], List[Variable]]:
                     found_type: str = None
-                    if (variableProperty.get("type") == None):
-                        if (variableProperty.get("anyOf")):
+                    if (variable_property.get("type") == None):
+                        if (variable_property.get("anyOf")):
                             possible_values: List[Variable] = []
-                            for v in variableProperty["anyOf"]:
+                            for v in variable_property["anyOf"]:
                                 if v.get("type") != None:
                                     found_type = v["type"]
-                            for v in variableProperty["anyOf"]:
+                            for v in variable_property["anyOf"]:
                                 if v.get("const") != None:
                                     variable = Variable(
                                         name = v['const'] if v.get("name") == None else v["name"],
@@ -456,17 +456,21 @@ class Spec:
                             return [found_type], possible_values
                         return [None], []
 
-                    elif (variableProperty["type"] == "array"):
+                    elif (variable_property["type"] == "array"):
                         # only support root levels for now
-                        return [
-                            variableProperty["type"],
-                            variableProperty["items"]["type"]
-                        ], []
+                        types = [variable_property["type"]]
+
+                        def collect_types(data: dict, in_types: List[str]) -> List[str]:
+                            if data.get("items"):
+                                in_types.append(data["items"]["type"])
+                                return collect_types(data["items"], in_types)
+
+                        collect_types(variable_property, types)
+                        return types, []
                     else:
-                        return [variableProperty["type"]], []
+                        return [variable_property["type"]], []
                 
                 variable_types, possible_values = resolve_variable_type_and_possible_values()
-                print(variable_types)
 
                 data_type: DataType = DataType.from_string(variable_types[0] if variable_types[0] != None else 'object')
                 if len(variable_types) > 1:
@@ -481,11 +485,11 @@ class Spec:
 
                 variable = Variable(
                     name=variableName,
-                    description=variableProperty["description"],
+                    description=variable_property["description"],
                     json_data_type=data_type,
                     required=variableName in self.required_variable_names,
-                    default_value=variableProperty.get("default"),
-                    reference_type=variableProperty.get("$ref")
+                    default_value=variable_property.get("default"),
+                    reference_type=variable_property.get("$ref")
                 )
                 variable.resolve_signature(self)
                 self.variables.append(variable)
@@ -677,7 +681,8 @@ class Spec:
             ) for v in sorted_variables])
 
         return_value = f'\n{self.config.code_generation_config.scope_indent_character}'.join(
-            textwrap.wrap(self_as_variable.resolve_constructor(self, construction_args), 75))
+            textwrap.wrap(self_as_variable.resolve_constructor(self, construction_args), 75, subsequent_indent=\
+                self.config.code_generation_config.scope_indent_character*4, fix_sentence_endings=True, break_long_words=False))
         return_value += self.config.code_generation_config.statement_close
         return_value = self.indent(
             self.config.code_generation_config.method_return_template.format(name=return_value), 1)
@@ -728,7 +733,7 @@ if __name__ == "__main__":
 
     source += spec.resolve()
 
-    print(source)
+    # print(source)
 
     with open(args.output_file, 'w') as f:
         f.write(source)

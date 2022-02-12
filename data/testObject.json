@@ -1,6 +1,14 @@
 {
     "variableA": 100,
+    "variableB": "Hello World",
     "variableC": {
         "count": 4
-    }
+    },
+    "variableD": "ABC",
+    "variableE": 2,
+    "arrayVariable": [1, 2, 3, 4, 5],
+    "arrayOfArrays": [
+        [1, 2, 3, 4, 5],
+        [1, 2, 3, 4, 5]
+    ]
 }

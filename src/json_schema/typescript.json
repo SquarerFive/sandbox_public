@@ -5,7 +5,7 @@
         "integer_typename": "number",
         "object_typename": null,
         "boolean_typename": "boolean",
-        "array_typename": "array"
+        "array_typename": "Array<{typename}>"
     },
     "encoder_decoder_config": {
         "json_object_typename": "PythonJSONUtilities.JsonUtilities",

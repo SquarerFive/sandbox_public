@@ -21,18 +21,21 @@
         "json_object_set_integer_field": "{name}.set_integer_field(\"{variable_name}\", {value})",
         "json_object_set_object_field": "{name}.set_object_field(\"{variable_name}\", {value_typename}.{json_encode_method_name}({value}))",
         "json_object_set_boolean_field": "{name}.set_boolean_field(\"{variable_name}\", {value})",
+        "json_object_set_array_field": "{name}.set_array_field(\"{variable_name}\", {value})",
 
         "json_object_get_string_field": "{name}.get_string_field(\"{variable_name}\")",
         "json_object_get_number_field": "{name}.get_number_field(\"{variable_name}\")",
         "json_object_get_integer_field": "{name}.get_integer_field(\"{variable_name}\")",
         "json_object_get_object_field": "{value_typename}.{json_decode_method_name}({name}.get_object_field(\"{variable_name}\"))",
         "json_object_get_boolean_field": "{name}.get_boolean_field(\"{variable_name}\")",
+        "json_object_get_array_field": "{name}.get_array_field(\"{variable_name}\")",
 
         "json_object_get_opt_string_field": "{name}.get_string_field(\"{variable_name}\")",
         "json_object_get_opt_number_field": "{name}.get_number_field(\"{variable_name}\")",
         "json_object_get_opt_integer_field": "{name}.get_integer_field(\"{variable_name}\")",
         "json_object_get_opt_object_field": "{value_typename}.{json_decode_method_name}({name}.get_object_field(\"{variable_name}\"))",
         "json_object_get_opt_boolean_field": "{name}.get_boolean_field(\"{variable_name}\")",
+        "json_object_get_opt_array_field": "{name}.get_array_field(\"{variable_name}\")",
         "json_object_has_field": "{name}->HasField(\"{variable_name}\")"
     },
     "code_generation_config": {

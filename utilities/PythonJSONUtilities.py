@@ -30,6 +30,11 @@ class JsonUtilities:
             self.validate_type(self.data[field_name], bool)
             return self.data[field_name]
     
+    def get_array_field(self, field_name: str) -> Optional[List[Any]]:
+        if self.data.get(field_name):
+            self.validate_type(self.data[field_name], list)
+            return self.data[field_name]
+    
     def set_string_field(self, field_name: str, value: Optional[str]):
         if value != None:
             self.validate_type(value, str)
@@ -48,4 +53,9 @@ class JsonUtilities:
     def set_boolean_field(self, field_name: str, value: Optional[bool]):
         if value != None:
             self.validate_type(value, bool)
+            self.data[field_name] = value
+    
+    def set_array_field(self, field_name: str, value: List[Any]):
+        if value != None:
+            self.validate_type(value, list)
             self.data[field_name] = value

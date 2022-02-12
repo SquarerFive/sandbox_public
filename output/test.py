@@ -62,11 +62,19 @@ class TestObject :
     # enum-like value int
     variableE: int
 
-    def __init__(self, In_variableB: str, In_variableD: str, In_variableC: OtherTestObject, In_variableE: int, In_variableA: int = 24) :
+    # This is an array of integers
+    arrayVariable: typing.List[int]
+
+    # This is an array of arrays of integers
+    arrayOfArrays: typing.List[typing.List[int]]
+
+    def __init__(self, In_variableB: str, In_variableD: str, In_variableC: OtherTestObject, In_variableE: int, In_arrayVariable: typing.List[int], In_arrayOfArrays: typing.List[typing.List[int]], In_variableA: int = 24) :
         self.variableB = In_variableB
         self.variableD = In_variableD
         self.variableC = In_variableC
         self.variableE = In_variableE
+        self.arrayVariable = In_arrayVariable
+        self.arrayOfArrays = In_arrayOfArrays
         self.variableA = In_variableA
 
 
@@ -81,6 +89,8 @@ class TestObject :
         OutTestObjectJSON.set_object_field("variableC", OtherTestObject.to_json(InTestObject.variableC))
         OutTestObjectJSON.set_string_field("variableD", InTestObject.variableD)
         OutTestObjectJSON.set_integer_field("variableE", InTestObject.variableE)
+        OutTestObjectJSON.set_array_field("arrayVariable", InTestObject.arrayVariable)
+        OutTestObjectJSON.set_array_field("arrayOfArrays", InTestObject.arrayOfArrays)
         return OutTestObjectJSON
 
 
@@ -89,10 +99,12 @@ class TestObject :
         if InTestObjectJSON == None: return None
 
         return TestObject(InTestObjectJSON.get_string_field("variableB"),
-         InTestObjectJSON.get_string_field("variableD"),
-         OtherTestObject.from_json(InTestObjectJSON.get_object_field("variableC")),
-         InTestObjectJSON.get_integer_field("variableE"),
-         InTestObjectJSON.get_integer_field("variableA"))
+             InTestObjectJSON.get_string_field("variableD"),
+             OtherTestObject.from_json(InTestObjectJSON.get_object_field("variableC")),
+             InTestObjectJSON.get_integer_field("variableE"),
+             InTestObjectJSON.get_array_field("arrayVariable"),
+             InTestObjectJSON.get_array_field("arrayOfArrays"),
+             InTestObjectJSON.get_integer_field("variableA"))
 
 
 

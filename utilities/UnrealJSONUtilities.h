@@ -83,8 +83,8 @@ public:
 	template <typename T>
 	static TArray<TSharedPtr<FJsonValue>> SetArrayField_Internal(const TSharedPtr<FJsonObject>& InJsonObject, const FString& FieldName, const TArray<T>& Values) {
 		TArray<TSharedPtr<FJsonValue>> JsonValues;
-		
-		if constexpr(TIsSame<T, double>::Value) {
+
+		if constexpr (TIsSame<T, double>::Value) {
 			for (const auto& Value : Values) {
 				JsonValues.Add(
 					MakeShareable(
@@ -220,6 +220,7 @@ public:
 
 	static bool GetBoolField(const TOptional<TSharedPtr<FJsonObject>>& InJsonObjectOpt, const FString& FieldName) {
 		const auto& InJsonObject = (*InJsonObjectOpt);
+
 		FIELD_REQUIRED(InJsonObject, FieldName)
 			return InJsonObject->GetBoolField(FieldName);
 	}
@@ -245,17 +246,15 @@ public:
 	}
 
 	template<typename T>
-	static T GetArrayField(const TOptional<TSharedPtr<FJsonObject>>& InJsonObjectOpt, const FString& FieldName) {
+	static T GetArrayField_Internal(const TArray<TSharedPtr<FJsonValue>>& JsonArrayValues) {
 		T Result;
-		const auto& InJsonObject = (*InJsonObjectOpt);
-
-		const auto& ArrayField = InJsonObject->GetArrayField(FieldName);
-
-		for (const auto& ArrayValue : ArrayField) {
+		
+		for (const auto& ArrayValue : JsonArrayValues) {
 			if constexpr (TIsSame<T::ElementType, int64>::Value) {
 				ensure(ArrayValue->Type == EJson::Number);
 				Result.Add(static_cast<int64>(ArrayValue->AsNumber()));
-			} else if constexpr (TIsSame<T::ElementType, double>::Value) {
+			}
+			else if constexpr (TIsSame<T::ElementType, double>::Value) {
 				ensure(ArrayValue->Type == EJson::Number);
 				Result.Add(ArrayValue->AsNumber());
 			}
@@ -267,7 +266,26 @@ public:
 				ensure(ArrayValue->Type == EJson::Boolean);
 				Result.Add(ArrayValue->AsBool());
 			}
+			else if constexpr (TIsTArray<T::ElementType>::Value) {
+				ensure(ArrayValue->Type == EJson::Array);
+				const auto& JsonArray = ArrayValue->AsArray();
+				T::ElementType Res = GetArrayField_Internal<T::ElementType>(JsonArray);
+				Result.Emplace(MoveTemp(Res));
+				
+			}
 		}
+
+		return Result;
+	}
+
+	template<typename T>
+	static T GetArrayField(const TOptional<TSharedPtr<FJsonObject>>& InJsonObjectOpt, const FString& FieldName) {
+		T Result;
+		const auto& InJsonObject = (*InJsonObjectOpt);
+
+		const auto& ArrayField = InJsonObject->GetArrayField(FieldName);
+
+		Result = GetArrayField_Internal<T>(ArrayField);
 
 		return Result;
 	}

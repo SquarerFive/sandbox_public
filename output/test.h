@@ -65,12 +65,16 @@ struct TestObject {
     // This is an array of integers
     TOptional<TArray<int64>> arrayVariable;
 
-    TestObject(const FString& In_variableB, const FString& In_variableD, const TOptional<OtherTestObject>& In_variableC, const TOptional<int64>& In_variableE, const TOptional<TArray<int64>>& In_arrayVariable, const TOptional<int64>& In_variableA = 24) {
+    // This is an array of arrays of integers
+    TOptional<TArray<TArray<int64>>> arrayOfArrays;
+
+    TestObject(const FString& In_variableB, const FString& In_variableD, const TOptional<OtherTestObject>& In_variableC, const TOptional<int64>& In_variableE, const TOptional<TArray<int64>>& In_arrayVariable, const TOptional<TArray<TArray<int64>>>& In_arrayOfArrays, const TOptional<int64>& In_variableA = 24) {
         this->variableB = In_variableB;
         this->variableD = In_variableD;
         this->variableC = In_variableC;
         this->variableE = In_variableE;
         this->arrayVariable = In_arrayVariable;
+        this->arrayOfArrays = In_arrayOfArrays;
         this->variableA = In_variableA;
     }
 
@@ -85,6 +89,7 @@ struct TestObject {
         UJson::SetStringField(OutTestObjectJSON, "variableD", InTestObject->variableD);
         UJson::SetIntegerField(OutTestObjectJSON,"variableE", InTestObject->variableE);
         UJson::SetArrayField(OutTestObjectJSON,"arrayVariable", InTestObject->arrayVariable);
+        UJson::SetArrayField(OutTestObjectJSON,"arrayOfArrays", InTestObject->arrayOfArrays);
         return OutTestObjectJSON;
     }
 
@@ -92,11 +97,12 @@ struct TestObject {
         RETURN_NULL_OBJECT_IF_NOT_EXIST(InTestObjectJSON)
 
         return TestObject(UJson::GetStringField(InTestObjectJSON,"variableB"),
-         UJson::GetStringField(InTestObjectJSON,"variableD"),
-         OtherTestObject::FromJSON(UJson::GetObjectFieldOpt(InTestObjectJSON,
-         "variableC")), UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
-         UJson::GetArrayFieldOpt<TArray<int64>>(InTestObjectJSON,"arrayVariable"),
-         UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"));
+             UJson::GetStringField(InTestObjectJSON,"variableD"),
+             OtherTestObject::FromJSON(UJson::GetObjectFieldOpt(InTestObjectJSON,
+             "variableC")), UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
+             UJson::GetArrayFieldOpt<TArray<int64>>(InTestObjectJSON,"arrayVariable"),
+             UJson::GetArrayFieldOpt<TArray<TArray<int64>>>(InTestObjectJSON,"arrayOfArrays"),
+             UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"));
     }
 };
 
