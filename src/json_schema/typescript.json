@@ -44,7 +44,7 @@
         "qualifier_const": "",
         "qualifier_inline": "",
         "qualifier_static": "static",
-        "variable_declaration_template": "{qualifiers} {name}: {typename}",
+        "variable_declaration_template": "{qualifiers}{name}: {typename}",
         "optional_variable_declaration_template": "{name}?: {typename}",
         "variable_declaration_default_value_template": "{variable_declaration} = {value}",
         "variable_postfix_reference_template": "",

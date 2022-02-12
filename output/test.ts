@@ -15,13 +15,13 @@ export class OtherTestObject {
 }
 
 export class VARIABLED {
-    static  ABC: string = "ABC";
-    static  XYZ: string = "XYZ";
+    static ABC: string = "ABC";
+    static XYZ: string = "XYZ";
 }
 
 export class VARIABLEE {
-    static  LOW: number = 2;
-    static  HIGH: number = 4;
+    static LOW: number = 2;
+    static HIGH: number = 4;
 }
 
 export class TestObject {

@@ -6,7 +6,10 @@ various CLI utils for my projects
 This tool is used to generate a data structure with the relevant serializer/deserializers for a programming language.
 
 The syntax is defined using a config file,
-examples here are: `python.json` and `ue_cpp_config.json`.
+languages already supported are: 
+- Python 3: `python.json`
+- UE4 C++: `ue_cpp_config.json`
+- Typescript: `typescript.json`
 
 Array data types are not supported yet!
 
@@ -26,15 +29,15 @@ import typing
 
 
 class OtherTestObject :
-
     # [[GENERATED_OBJECT]] This is another test object
-
-    def __init__(self, In_count: int) :
-        self.count = In_count
 
 
     # Number of items
     count: int
+
+    def __init__(self, In_count: int) :
+        self.count = In_count
+
 
     # JSON Encoders/Decoders
     @staticmethod
@@ -55,25 +58,13 @@ class OtherTestObject :
 
 
 class TestObject :
-
     # [[GENERATED_OBJECT]] This is a test object
 
-    def __init__(self, In_variableB: str, In_variableC: OtherTestObject, In_variableD: str, In_variableE: int, In_variableA: int = 24) :
-        self.variableB = In_variableB
-        self.variableC = In_variableC
-        self.variableD = In_variableD
-        self.variableE = In_variableE
-        self.variableA = In_variableA
-
-
     class VARIABLED :
-
         ABC: str = "ABC"
         XYZ: str = "XYZ"
 
-
     class VARIABLEE :
-
         LOW: int = 2
         HIGH: int = 4
 
@@ -94,6 +85,14 @@ class TestObject :
     # enum-like value int
     variableE: int
 
+    def __init__(self, In_variableB: str, In_variableD: str, In_variableC: OtherTestObject, In_variableE: int, In_variableA: int = 24) :
+        self.variableB = In_variableB
+        self.variableD = In_variableD
+        self.variableC = In_variableC
+        self.variableE = In_variableE
+        self.variableA = In_variableA
+
+
     # JSON Encoders/Decoders
     @staticmethod
     def to_json(InTestObject: typing.Any) :
@@ -113,14 +112,10 @@ class TestObject :
         if InTestObjectJSON == None: return None
 
         return TestObject(InTestObjectJSON.get_string_field("variableB"),
-         OtherTestObject.from_json(InTestObjectJSON.get_object_field("variableC")),
          InTestObjectJSON.get_string_field("variableD"),
+         OtherTestObject.from_json(InTestObjectJSON.get_object_field("variableC")),
          InTestObjectJSON.get_integer_field("variableE"),
          InTestObjectJSON.get_integer_field("variableA"))
-
-
-
-
 ```
 
 Generate UE4-compatible C++ code:
@@ -145,12 +140,13 @@ struct OtherTestObject {
 
     // [[GENERATED_OBJECT]] This is another test object
 
-    OtherTestObject(const TOptional<int64>& In_count) {
-        this->count = In_count;
-    }
 
     // Number of items
     TOptional<int64> count;
+
+    OtherTestObject(const TOptional<int64>& In_count) {
+        this->count = In_count;
+    }
 
     // JSON Encoders/Decoders
     static TOptional<TSharedPtr<FJsonObject>> ToJSON(const TOptional<OtherTestObject>& InOtherTestObject) {
@@ -172,20 +168,11 @@ struct TestObject {
 
     // [[GENERATED_OBJECT]] This is a test object
 
-    TestObject(const FString& In_variableB, const TOptional<OtherTestObject>& In_variableC, const FString& In_variableD, const TOptional<int64>& In_variableE, const TOptional<int64>& In_variableA = 24) {
-        this->variableB = In_variableB;
-        this->variableC = In_variableC;
-        this->variableD = In_variableD;
-        this->variableE = In_variableE;
-        this->variableA = In_variableA;
-    }
-
     struct VARIABLED {
 
         inline static const FString ABC = "ABC";
         inline static const FString XYZ = "XYZ";
     };
-
     struct VARIABLEE {
 
         inline static const int64 LOW = 2;
@@ -208,6 +195,14 @@ struct TestObject {
     // enum-like value int
     TOptional<int64> variableE;
 
+    TestObject(const FString& In_variableB, const FString& In_variableD, const TOptional<OtherTestObject>& In_variableC, const TOptional<int64>& In_variableE, const TOptional<int64>& In_variableA = 24) {
+        this->variableB = In_variableB;
+        this->variableD = In_variableD;
+        this->variableC = In_variableC;
+        this->variableE = In_variableE;
+        this->variableA = In_variableA;
+    }
+
     // JSON Encoders/Decoders
     static TOptional<TSharedPtr<FJsonObject>> ToJSON(const TOptional<TestObject>& InTestObject) {
         RETURN_NULL_OBJECT_IF_NOT_EXIST(InTestObject)
@@ -225,10 +220,74 @@ struct TestObject {
         RETURN_NULL_OBJECT_IF_NOT_EXIST(InTestObjectJSON)
 
         return TestObject(UJson::GetStringField(InTestObjectJSON,"variableB"),
+         UJson::GetStringField(InTestObjectJSON,"variableD"),
          OtherTestObject::FromJSON(UJson::GetObjectFieldOpt(InTestObjectJSON,
-         "variableC")), UJson::GetStringField(InTestObjectJSON,"variableD"),
-         UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
+         "variableC")), UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
          UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"));
     }
 };
+```
+
+Generate Typescript:
+
+```
+python .\src\json_schema\json_schema.py -i .\data\testObject.SANDBOX.schema.json -o ./output/test.ts -c .\src\json_schema\typescript.json  
+```
+Resuts in:
+```ts
+// THIS IS A GENERATED FILE! DO NOT EDIT!
+
+
+export class OtherTestObject {
+    // [[GENERATED_OBJECT]] This is another test object
+
+
+    // Number of items
+    count?: number;
+
+    constructor(In_count?: number) {
+        this.count = In_count;
+    }
+
+}
+
+export class VARIABLED {
+    static ABC: string = "ABC";
+    static XYZ: string = "XYZ";
+}
+
+export class VARIABLEE {
+    static LOW: number = 2;
+    static HIGH: number = 4;
+}
+
+export class TestObject {
+    // [[GENERATED_OBJECT]] This is a test object
+
+
+    // This property represents an integer. It is not
+    // required
+    variableA?: number = 24;
+
+    // This property is a string. It is required
+    variableB: string;
+
+    // This is an object variable
+    variableC?: OtherTestObject;
+
+    // enum-like value
+    variableD: string;
+
+    // enum-like value int
+    variableE?: number;
+
+    constructor(In_variableB: string, In_variableD: string, In_variableC?: OtherTestObject, In_variableE?: number, In_variableA: number = 24) {
+        this.variableB = In_variableB;
+        this.variableD = In_variableD;
+        this.variableC = In_variableC;
+        this.variableE = In_variableE;
+        this.variableA = In_variableA;
+    }
+
+}
 ```
