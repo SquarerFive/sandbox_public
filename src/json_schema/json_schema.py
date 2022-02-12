@@ -87,7 +87,7 @@ class CodeGenerationConfig(BaseModel):
 
     scope_character_open: str = "{"
     scope_charater_close: str = "}"
-    object_scope_character_open: str = "{\n\n"
+    object_scope_character_open: str = "{\n"
     object_scope_character_close: str = "};"
 
     scope_indent_count: int = 4
@@ -393,10 +393,10 @@ class Spec:
                 variable.resolve_signature(self)
                 self.variables.append(variable)
 
-            self.body += f"{self.config.code_generation_config.object_declaration_template.format(typename = self_name)} {self.config.code_generation_config.object_scope_character_open}\n{self.indent(self.resolve_description(), 1)}\n\n"
+            self.body += f"{self.config.code_generation_config.object_declaration_template.format(typename = self_name)} {self.config.code_generation_config.object_scope_character_open}{self.indent(self.resolve_description(), 1)}\n\n"
 
             # self.body += self.indent(self.resolve_constructor(True), 1)+'\n\n'
-            self.body += self.indent(self.resolve_constructor(False), 1)+'\n\n'
+            self.body += self.indent(self.resolve_constructor(False), 1)+'\n'
 
             for var in any_of_variables:
                 self.body += self.indent(var.resolve(self), 1)+"\n\n"

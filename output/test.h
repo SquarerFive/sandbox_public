@@ -9,13 +9,11 @@
 
 struct OtherTestObject {
 
-
     // [[GENERATED_OBJECT]] This is another test object
 
     OtherTestObject(const TOptional<int64>& In_count) {
         this->count = In_count;
     }
-
 
     // Number of items
     TOptional<int64> count;
@@ -38,7 +36,6 @@ struct OtherTestObject {
 
 struct TestObject {
 
-
     // [[GENERATED_OBJECT]] This is a test object
 
     TestObject(const FString& In_variableB, const TOptional<OtherTestObject>& In_variableC, const FString& In_variableD, const TOptional<int64>& In_variableE, const TOptional<int64>& In_variableA = 24) {
@@ -48,7 +45,6 @@ struct TestObject {
         this->variableE = In_variableE;
         this->variableA = In_variableA;
     }
-
 
     struct VARIABLED {
 

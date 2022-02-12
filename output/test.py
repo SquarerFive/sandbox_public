@@ -7,12 +7,10 @@ import typing
 
 class OtherTestObject :
 
-
     # [[GENERATED_OBJECT]] This is another test object
 
     def __init__(self, In_count: int) :
         self.count = In_count
-
 
 
     # Number of items
@@ -38,7 +36,6 @@ class OtherTestObject :
 
 class TestObject :
 
-
     # [[GENERATED_OBJECT]] This is a test object
 
     def __init__(self, In_variableB: str, In_variableC: OtherTestObject, In_variableD: str, In_variableE: int, In_variableA: int = 24) :
@@ -47,7 +44,6 @@ class TestObject :
         self.variableD = In_variableD
         self.variableE = In_variableE
         self.variableA = In_variableA
-
 
 
     class VARIABLED :
