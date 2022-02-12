@@ -83,8 +83,8 @@ public:
 	template <typename T>
 	static TArray<TSharedPtr<FJsonValue>> SetArrayField_Internal(const TSharedPtr<FJsonObject>& InJsonObject, const FString& FieldName, const TArray<T>& Values) {
 		TArray<TSharedPtr<FJsonValue>> JsonValues;
-
-		if (TIsSame<T, double>::Value) {
+		
+		if constexpr(TIsSame<T, double>::Value) {
 			for (const auto& Value : Values) {
 				JsonValues.Add(
 					MakeShareable(
@@ -94,7 +94,7 @@ public:
 			}
 		}
 
-		else if (TIsSame<T, int64>::Value) {
+		else if constexpr (TIsSame<T, int64>::Value) {
 			for (const auto& Value : Values) {
 				JsonValues.Add(
 					MakeShareable(
@@ -104,7 +104,7 @@ public:
 			}
 		}
 
-		else if (TIsSame<T, FString>::Value) {
+		else if constexpr (TIsSame<T, FString>::Value) {
 			for (const auto& Value : Values) {
 				JsonValues.Add(
 					MakeShareable(
@@ -114,7 +114,7 @@ public:
 			}
 		}
 
-		else if (TIsSame<T, bool>::Value) {
+		else if constexpr (TIsSame<T, bool>::Value) {
 			for (const auto& Value : Values) {
 				JsonValues.Add(
 					MakeShareable(
@@ -124,7 +124,7 @@ public:
 			}
 		}
 
-		else if (TIsSame<T, bool>::Value) {
+		else if constexpr (TIsSame<T, bool>::Value) {
 			for (const auto& Value : Values) {
 				JsonValues.Add(
 					MakeShareable(
@@ -134,7 +134,7 @@ public:
 			}
 		}
 
-		else if (TIsSame<T, bool>::Value) {
+		else if constexpr (TIsSame<T, bool>::Value) {
 			for (const auto& Value : Values) {
 				JsonValues.Add(
 					MakeShareable(
@@ -144,7 +144,7 @@ public:
 			}
 		}
 
-		else if (TIsTArray<T>::Value) {
+		else if constexpr (TIsTArray<T>::Value) {
 			for (const auto& Value : Values) {
 				JsonValues.Add(
 					MakeShareable(
@@ -157,9 +157,7 @@ public:
 			// Is object
 			for (const auto& Value : Values) {
 				JsonValues.Add(
-					MakeShareable(
-						new FJsonValueObject(Value)
-					)
+					Value
 				);
 			}
 		}
@@ -254,19 +252,20 @@ public:
 		const auto& ArrayField = InJsonObject->GetArrayField(FieldName);
 
 		for (const auto& ArrayValue : ArrayField) {
-			switch (ArrayValue->Type) {
-			case EJson::String:
-				Result.Add(ArrayValue->AsString());
-				break;
-			case EJson::Number:
+			if constexpr (TIsSame<T::ElementType, int64>::Value) {
+				ensure(ArrayValue->Type == EJson::Number);
+				Result.Add(static_cast<int64>(ArrayValue->AsNumber()));
+			} else if constexpr (TIsSame<T::ElementType, double>::Value) {
+				ensure(ArrayValue->Type == EJson::Number);
 				Result.Add(ArrayValue->AsNumber());
-				break;
-			case EJson::Boolean:
+			}
+			else if constexpr (TIsSame<T::ElementType, FString>::Value) {
+				ensure(ArrayValue->Type == EJson::String);
+				Result.Add(ArrayValue->AsString());
+			}
+			else if constexpr (TIsSame<T::ElementType, bool>::Value) {
+				ensure(ArrayValue->Type == EJson::Boolean);
 				Result.Add(ArrayValue->AsBool());
-				break;
-			case EJson::Null:
-				Result.Add(NULL);
-				break;
 			}
 		}
 
@@ -281,6 +280,6 @@ public:
 		if (InJsonObject->HasTypedField<EJson::Array>(FieldName)) {
 			return GetArrayField<T>(InJsonObjectOpt, FieldName);
 
-		} return TOptional<TSharedPtr<FJsonObject>>{};
+		} return {};
 	}
 };
