@@ -54,10 +54,11 @@ class CodeGenerationConfig(BaseModel):
     import_module_template: str = """#include "{module_name}" """
     imported_module_name_template: str = """{module_name}.h"""
     object_declaration_template: str = "struct {typename}"
-    any_of_declaration_template: str = object_declaration_template
+    
 
     statement_close: str = ";"
 
+    # Variables
     qualifier_const: str = "const"
     qualifier_inline: str = "inline"
     qualifier_static: str = "static"
@@ -68,6 +69,12 @@ class CodeGenerationConfig(BaseModel):
 
     variable_postfix_reference_template: str = "&"
     variable_postfix_pointer_template: str = "*"
+
+    ## Enums & anyOf
+    any_of_declaration_template: str = object_declaration_template
+    declare_anyof_outside_self: bool = False
+
+    # General
 
     access_member = "{object_name}.{member_name}"
     access_optional_member = "{object_name}->{member_name}"
@@ -107,9 +114,12 @@ class CodeGenerationConfig(BaseModel):
     any_type: str = "std::any"
 
     self_access: str = "this->{member_name}"
+    mark_as_optional_with_default_value_in_args: bool = True
 
 
 class Config(BaseModel):
+    include_serializers_and_deserializers: bool = True
+
     data_type_config: DataTypeConfig = DataTypeConfig()
     encoder_decoder_config: EncoderDecoderConfig = EncoderDecoderConfig()
     code_generation_config: CodeGenerationConfig = CodeGenerationConfig()
@@ -169,6 +179,7 @@ class Variable(BaseModel):
                           include_assignment: bool = True,
                           include_name: bool = True,
                           typename_override: Optional[str] = None,
+                          is_arg: bool = False,
                           format_name_fn: Optional[Callable[[str], str]] = None
                           ) -> str:
         spec: Spec = spec
@@ -210,7 +221,10 @@ class Variable(BaseModel):
             qualifiers.append(
                 spec.config.code_generation_config.qualifier_const)
 
-        declaration_template = spec.config.code_generation_config.variable_declaration_template if self.required else spec.config.code_generation_config.optional_variable_declaration_template
+        if is_arg and (not spec.config.code_generation_config.mark_as_optional_with_default_value_in_args) and self.default_value != None:
+            declaration_template = spec.config.code_generation_config.variable_declaration_template
+        else:
+            declaration_template = spec.config.code_generation_config.variable_declaration_template if self.required else spec.config.code_generation_config.optional_variable_declaration_template
 
         body = declaration_template.format(
             qualifiers=' '.join(qualifiers),
@@ -303,9 +317,13 @@ class Spec:
             self.config.code_generation_config.scope_indent_count*levels
         return textwrap.indent(string, indent_space)
 
+    @property
+    def sorted_variables(self):
+        return sorted(
+            self.variables, key=lambda v: 2 if v.default_value != None else (1 if v.required == False else 0))
+
     def resolve_constructor(self, only_required: bool = True):
-        sorted_variables = sorted(
-            self.variables, key=lambda v: 1 if v.default_value != None else 0)
+        sorted_variables = self.sorted_variables
 
         def format_name_fn(name: str) -> str:
             return f"In_{name}"
@@ -315,7 +333,7 @@ class Spec:
         ]
 
         input_signatures = [
-            v.resolve_signature(self, True, True, close_declaration=False, format_name_fn=format_name_fn) for v in context_variables
+            v.resolve_signature(self, True, True, close_declaration=False, format_name_fn=format_name_fn, is_arg = True) for v in context_variables
         ]
 
         body = self.config.code_generation_config.object_constructor_template.format(
@@ -396,21 +414,31 @@ class Spec:
             self.body += f"{self.config.code_generation_config.object_declaration_template.format(typename = self_name)} {self.config.code_generation_config.object_scope_character_open}{self.indent(self.resolve_description(), 1)}\n\n"
 
             # self.body += self.indent(self.resolve_constructor(True), 1)+'\n\n'
-            self.body += self.indent(self.resolve_constructor(False), 1)+'\n'
-
-            for var in any_of_variables:
-                self.body += self.indent(var.resolve(self), 1)+"\n\n"
+            
+            if not self.config.code_generation_config.declare_anyof_outside_self:
+                for var in any_of_variables:
+                    self.body += self.indent(var.resolve(self), 1)+"\n"
+            else:
+                b = ""
+                for var in any_of_variables:
+                    b += self.indent(var.resolve(self), 0)+"\n\n"
+                self.body = b + self.body
+            
+            self.body += "\n"
 
             for var in self.variables:
                 self.body += self.indent(var.resolve_description(self), 1) + \
                     "\n" + self.indent(var.resolve_signature(self), 1)+"\n\n"
 
-            self.body += self.indent(self.config.code_generation_config.comment_character +
-                                     " JSON Encoders/Decoders" + "\n", 1)
-            self.body += self.indent(self.create_json_encoder(), 1)
-            self.body += "\n\n"
-            self.body += self.indent(self.create_json_decoder(), 1)
-            self.body += "\n"
+            self.body += self.indent(self.resolve_constructor(False), 1)+'\n'
+
+            if self.config.include_serializers_and_deserializers:
+                self.body += self.indent(self.config.code_generation_config.comment_character +
+                                         " JSON Encoders/Decoders" + "\n", 1)
+                self.body += self.indent(self.create_json_encoder(), 1)
+                self.body += "\n\n"
+                self.body += self.indent(self.create_json_decoder(), 1)
+                self.body += "\n"
 
             self.body += self.config.code_generation_config.object_scope_character_close + "\n\n"
 
@@ -503,8 +531,7 @@ class Spec:
     def create_json_decoder(self):
         self_typename = self.title_to_typename()
 
-        sorted_variables = sorted(
-            self.variables, key=lambda v: 1 if v.default_value != None else 0)
+        sorted_variables = self.sorted_variables
 
         self_as_variable = Variable(
             name=f"Out{self_typename}",

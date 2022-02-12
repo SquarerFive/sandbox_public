@@ -73,5 +73,7 @@
         "allow_self_type_in_args": true,
         "any_type": "std::any",
         "self_access": "this->{member_name}"
-    }
+    },
+
+    "include_serializers_and_deserializers": true
 }

@@ -1,11 +1,11 @@
 {
     "data_type_config": {
-        "string_typename": "str",
-        "number_typename": "float",
-        "integer_typename": "int",
+        "string_typename": "string",
+        "number_typename": "number",
+        "integer_typename": "number",
         "object_typename": null,
-        "boolean_typename": "bool",
-        "array_typename": "typing.List[{typename}]"
+        "boolean_typename": "boolean",
+        "array_typename": "array"
     },
     "encoder_decoder_config": {
         "json_object_typename": "PythonJSONUtilities.JsonUtilities",
@@ -38,47 +38,47 @@
     "code_generation_config": {
         "import_module_template": "import {module_name}",
         "imported_module_name_template": "{module_name}.h",
-        "object_declaration_template": "class {typename}",
-        "any_of_declaration_template": "class {typename}",
+        "object_declaration_template": "export class {typename}",
+        "any_of_declaration_template": "export class {typename}",
         "statement_close": "",
         "qualifier_const": "",
         "qualifier_inline": "",
-        "qualifier_static": "",
-        "variable_declaration_template": "{name}: {typename}",
-        "optional_variable_declaration_template": "{name}: {typename}",
+        "qualifier_static": "static",
+        "variable_declaration_template": "{qualifiers} {name}: {typename}",
+        "optional_variable_declaration_template": "{name}?: {typename}",
         "variable_declaration_default_value_template": "{variable_declaration} = {value}",
         "variable_postfix_reference_template": "",
         "variable_postfix_pointer_template": "",
-        "variable_declaration_close": "",
+        "variable_declaration_close": ";",
         "variable_assignment_template": "{name} = {value}",
-        "variable_assignment_close": "",
-        "method_declaration_template": "def {name}({args})",
+        "variable_assignment_close": ";",
+        "method_declaration_template": "function {name}({args})",
         "method_return_template": "return {name}",
-        "static_method_template": "@staticmethod\n{method_declaration}",
-        "construct_object_template": "{typename}({args})",
-        "object_constructor_template": "def __init__(self, {args})",
-        "scope_character_open": ":",
-        "scope_charater_close": "",
-        "object_scope_character_open": ":\n",
-        "object_scope_character_close": "",
+        "static_method_template": "{method_declaration}",
+        "construct_object_template": "new {typename}({args})",
+        "object_constructor_template": "constructor({args})",
+        "scope_character_open": "{",
+        "scope_charater_close": "}",
+        "object_scope_character_open": "{\n",
+        "object_scope_character_close": "}",
         "scope_indent_count": 4,
         "scope_indent_character": " ",
-        "comment_character": "#",
+        "comment_character": "//",
         "module_imports": [
-            "json",
-            "PythonJSONUtilities",
-            "pydantic",
-            "typing"
+
         ],
         "access_member": "{object_name}.{member_name}",
         "access_optional_member": "{object_name}.{member_name}",
         "static_accessor": "{typename}.{member_name}",
-        "file_start": "# THIS IS A GENERATED FILE! DO NOT EDIT!\n",
+        "file_start": "// THIS IS A GENERATED FILE! DO NOT EDIT!\n",
 
-        "allow_self_type_in_args": false,
-        "any_type": "typing.Any",
-        "self_access": "self.{member_name}"
+        "allow_self_type_in_args": true,
+        "any_type": "Any",
+        "self_access": "this.{member_name}",
+
+        "declare_anyof_outside_self": true,
+        "mark_as_optional_with_default_value_in_args": false
     },
 
-    "include_serializers_and_deserializers": true
+    "include_serializers_and_deserializers": false
 }

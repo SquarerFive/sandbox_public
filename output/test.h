@@ -11,12 +11,13 @@ struct OtherTestObject {
 
     // [[GENERATED_OBJECT]] This is another test object
 
-    OtherTestObject(const TOptional<int64>& In_count) {
-        this->count = In_count;
-    }
 
     // Number of items
     TOptional<int64> count;
+
+    OtherTestObject(const TOptional<int64>& In_count) {
+        this->count = In_count;
+    }
 
     // JSON Encoders/Decoders
     static TOptional<TSharedPtr<FJsonObject>> ToJSON(const TOptional<OtherTestObject>& InOtherTestObject) {
@@ -38,20 +39,11 @@ struct TestObject {
 
     // [[GENERATED_OBJECT]] This is a test object
 
-    TestObject(const FString& In_variableB, const TOptional<OtherTestObject>& In_variableC, const FString& In_variableD, const TOptional<int64>& In_variableE, const TOptional<int64>& In_variableA = 24) {
-        this->variableB = In_variableB;
-        this->variableC = In_variableC;
-        this->variableD = In_variableD;
-        this->variableE = In_variableE;
-        this->variableA = In_variableA;
-    }
-
     struct VARIABLED {
 
         inline static const FString ABC = "ABC";
         inline static const FString XYZ = "XYZ";
     };
-
     struct VARIABLEE {
 
         inline static const int64 LOW = 2;
@@ -74,6 +66,14 @@ struct TestObject {
     // enum-like value int
     TOptional<int64> variableE;
 
+    TestObject(const FString& In_variableB, const FString& In_variableD, const TOptional<OtherTestObject>& In_variableC, const TOptional<int64>& In_variableE, const TOptional<int64>& In_variableA = 24) {
+        this->variableB = In_variableB;
+        this->variableD = In_variableD;
+        this->variableC = In_variableC;
+        this->variableE = In_variableE;
+        this->variableA = In_variableA;
+    }
+
     // JSON Encoders/Decoders
     static TOptional<TSharedPtr<FJsonObject>> ToJSON(const TOptional<TestObject>& InTestObject) {
         RETURN_NULL_OBJECT_IF_NOT_EXIST(InTestObject)
@@ -91,9 +91,9 @@ struct TestObject {
         RETURN_NULL_OBJECT_IF_NOT_EXIST(InTestObjectJSON)
 
         return TestObject(UJson::GetStringField(InTestObjectJSON,"variableB"),
+         UJson::GetStringField(InTestObjectJSON,"variableD"),
          OtherTestObject::FromJSON(UJson::GetObjectFieldOpt(InTestObjectJSON,
-         "variableC")), UJson::GetStringField(InTestObjectJSON,"variableD"),
-         UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
+         "variableC")), UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
          UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"));
     }
 };

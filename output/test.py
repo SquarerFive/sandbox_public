@@ -6,15 +6,15 @@ import typing
 
 
 class OtherTestObject :
-
     # [[GENERATED_OBJECT]] This is another test object
-
-    def __init__(self, In_count: int) :
-        self.count = In_count
 
 
     # Number of items
     count: int
+
+    def __init__(self, In_count: int) :
+        self.count = In_count
+
 
     # JSON Encoders/Decoders
     @staticmethod
@@ -35,25 +35,13 @@ class OtherTestObject :
 
 
 class TestObject :
-
     # [[GENERATED_OBJECT]] This is a test object
 
-    def __init__(self, In_variableB: str, In_variableC: OtherTestObject, In_variableD: str, In_variableE: int, In_variableA: int = 24) :
-        self.variableB = In_variableB
-        self.variableC = In_variableC
-        self.variableD = In_variableD
-        self.variableE = In_variableE
-        self.variableA = In_variableA
-
-
     class VARIABLED :
-
         ABC: str = "ABC"
         XYZ: str = "XYZ"
 
-
     class VARIABLEE :
-
         LOW: int = 2
         HIGH: int = 4
 
@@ -74,6 +62,14 @@ class TestObject :
     # enum-like value int
     variableE: int
 
+    def __init__(self, In_variableB: str, In_variableD: str, In_variableC: OtherTestObject, In_variableE: int, In_variableA: int = 24) :
+        self.variableB = In_variableB
+        self.variableD = In_variableD
+        self.variableC = In_variableC
+        self.variableE = In_variableE
+        self.variableA = In_variableA
+
+
     # JSON Encoders/Decoders
     @staticmethod
     def to_json(InTestObject: typing.Any) :
@@ -93,8 +89,8 @@ class TestObject :
         if InTestObjectJSON == None: return None
 
         return TestObject(InTestObjectJSON.get_string_field("variableB"),
-         OtherTestObject.from_json(InTestObjectJSON.get_object_field("variableC")),
          InTestObjectJSON.get_string_field("variableD"),
+         OtherTestObject.from_json(InTestObjectJSON.get_object_field("variableC")),
          InTestObjectJSON.get_integer_field("variableE"),
          InTestObjectJSON.get_integer_field("variableA"))
 
