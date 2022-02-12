@@ -29,7 +29,7 @@ import typing
 
 
 class OtherTestObject :
-    # [[GENERATED_OBJECT]] This is another test object
+    # This is another test object
 
 
     # Number of items
@@ -58,7 +58,7 @@ class OtherTestObject :
 
 
 class TestObject :
-    # [[GENERATED_OBJECT]] This is a test object
+    # This is a test object
 
     class VARIABLED :
         ABC: str = "ABC"
@@ -137,8 +137,7 @@ Results in:
 
 
 struct OtherTestObject {
-
-    // [[GENERATED_OBJECT]] This is another test object
+    // This is another test object
 
 
     // Number of items
@@ -165,16 +164,13 @@ struct OtherTestObject {
 };
 
 struct TestObject {
-
-    // [[GENERATED_OBJECT]] This is a test object
+    // This is a test object
 
     struct VARIABLED {
-
         inline static const FString ABC = "ABC";
         inline static const FString XYZ = "XYZ";
     };
     struct VARIABLEE {
-
         inline static const int64 LOW = 2;
         inline static const int64 HIGH = 4;
     };
@@ -195,11 +191,15 @@ struct TestObject {
     // enum-like value int
     TOptional<int64> variableE;
 
-    TestObject(const FString& In_variableB, const FString& In_variableD, const TOptional<OtherTestObject>& In_variableC, const TOptional<int64>& In_variableE, const TOptional<int64>& In_variableA = 24) {
+    // This is an array of integers
+    TOptional<TArray<int64>> arrayVariable;
+
+    TestObject(const FString& In_variableB, const FString& In_variableD, const TOptional<OtherTestObject>& In_variableC, const TOptional<int64>& In_variableE, const TOptional<TArray<int64>>& In_arrayVariable, const TOptional<int64>& In_variableA = 24) {
         this->variableB = In_variableB;
         this->variableD = In_variableD;
         this->variableC = In_variableC;
         this->variableE = In_variableE;
+        this->arrayVariable = In_arrayVariable;
         this->variableA = In_variableA;
     }
 
@@ -213,6 +213,7 @@ struct TestObject {
         UJson::SetObjectField(OutTestObjectJSON,"variableC", OtherTestObject::ToJSON(InTestObject->variableC));
         UJson::SetStringField(OutTestObjectJSON, "variableD", InTestObject->variableD);
         UJson::SetIntegerField(OutTestObjectJSON,"variableE", InTestObject->variableE);
+        UJson::SetArrayField(OutTestObjectJSON,"arrayVariable", InTestObject->arrayVariable);
         return OutTestObjectJSON;
     }
 
@@ -223,6 +224,7 @@ struct TestObject {
          UJson::GetStringField(InTestObjectJSON,"variableD"),
          OtherTestObject::FromJSON(UJson::GetObjectFieldOpt(InTestObjectJSON,
          "variableC")), UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
+         UJson::GetArrayFieldOpt<TArray<int64>>(InTestObjectJSON,"arrayVariable"),
          UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"));
     }
 };
