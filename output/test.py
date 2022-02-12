@@ -1,5 +1,8 @@
 # THIS IS A GENERATED FILE! DO NOT EDIT!
 import json
+import PythonJSONUtilities
+import pydantic
+import typing
 
 
 class OtherTestObject :
@@ -17,20 +20,19 @@ class OtherTestObject :
 
     # JSON Encoders/Decoders
     @staticmethod
-    def ToJSON(InOtherTestObject: OtherTestObject) :
-        RETURN_NULL_OBJECT_IF_NOT_EXIST(InOtherTestObject)
-        OutOtherTestObjectJSON: TSharedPtr<FJsonObject> = MakeShareable(new FJsonObject)
+    def to_json(InOtherTestObject: typing.Any) :
+        if InOtherTestObject == None: return None
+        OutOtherTestObjectJSON: PythonJSONUtilities.JsonUtilities = PythonJSONUtilities.JsonUtilities()
 
-        UJson::SetIntegerField(OutOtherTestObjectJSON,"count", InOtherTestObject.count)
+        OutOtherTestObjectJSON.set_integer_field("count", InOtherTestObject.count)
         return OutOtherTestObjectJSON
 
 
     @staticmethod
-    def FromJSON(InOtherTestObjectJSON: TSharedPtr<FJsonObject>) :
-        RETURN_NULL_OBJECT_IF_NOT_EXIST(InOtherTestObjectJSON)
+    def from_json(InOtherTestObjectJSON: PythonJSONUtilities.JsonUtilities) :
+        if InOtherTestObjectJSON == None: return None
 
-        return def __init__(self,
-         UJson::GetIntegerFieldOpt(InOtherTestObjectJSON,"count"))
+        return OtherTestObject(InOtherTestObjectJSON.get_integer_field("count"))
 
 
 
@@ -78,27 +80,27 @@ class TestObject :
 
     # JSON Encoders/Decoders
     @staticmethod
-    def ToJSON(InTestObject: TestObject) :
-        RETURN_NULL_OBJECT_IF_NOT_EXIST(InTestObject)
-        OutTestObjectJSON: TSharedPtr<FJsonObject> = MakeShareable(new FJsonObject)
+    def to_json(InTestObject: typing.Any) :
+        if InTestObject == None: return None
+        OutTestObjectJSON: PythonJSONUtilities.JsonUtilities = PythonJSONUtilities.JsonUtilities()
 
-        UJson::SetIntegerField(OutTestObjectJSON,"variableA", InTestObject.variableA)
-        UJson::SetStringField(OutTestObjectJSON, "variableB", InTestObject.variableB)
-        UJson::SetObjectField(OutTestObjectJSON,"variableC", OtherTestObject::ToJSON(InTestObject.variableC))
-        UJson::SetStringField(OutTestObjectJSON, "variableD", InTestObject.variableD)
-        UJson::SetIntegerField(OutTestObjectJSON,"variableE", InTestObject.variableE)
+        OutTestObjectJSON.set_integer_field("variableA", InTestObject.variableA)
+        OutTestObjectJSON.set_string_field("variableB", InTestObject.variableB)
+        OutTestObjectJSON.set_object_field("variableC", OtherTestObject.to_json(InTestObject.variableC))
+        OutTestObjectJSON.set_string_field("variableD", InTestObject.variableD)
+        OutTestObjectJSON.set_integer_field("variableE", InTestObject.variableE)
         return OutTestObjectJSON
 
 
     @staticmethod
-    def FromJSON(InTestObjectJSON: TSharedPtr<FJsonObject>) :
-        RETURN_NULL_OBJECT_IF_NOT_EXIST(InTestObjectJSON)
+    def from_json(InTestObjectJSON: PythonJSONUtilities.JsonUtilities) :
+        if InTestObjectJSON == None: return None
 
-        return def __init__(self, UJson::GetStringField(InTestObjectJSON,"variableB"),
-         OtherTestObject::FromJSON(UJson::GetObjectFieldOpt(InTestObjectJSON,
-         "variableC")), UJson::GetStringField(InTestObjectJSON,"variableD"),
-         UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
-         UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"))
+        return TestObject(InTestObjectJSON.get_string_field("variableB"),
+         OtherTestObject.from_json(InTestObjectJSON.get_object_field("variableC")),
+         InTestObjectJSON.get_string_field("variableD"),
+         InTestObjectJSON.get_integer_field("variableE"),
+         InTestObjectJSON.get_integer_field("variableA"))
 
 
 
