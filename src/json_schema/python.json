@@ -1,0 +1,81 @@
+{
+    "data_type_config": {
+        "string_typename": "str",
+        "number_typename": "float",
+        "integer_typename": "int",
+        "object_typename": null,
+        "boolean_typename": "bool",
+        "array_typename": "typing.List[{typename}]"
+    },
+    "encoder_decoder_config": {
+        "json_object_typename": "PythonJSONUtilities.JsonUtilities",
+        "json_object_assign_value": "PythonJSONUtilities.JsonUtilities()",
+        "json_object_variable_name": "_JsonObject_",
+        "return_null_object_if_not_exist": "if {name} == None: return None",
+
+        "json_encode_method_name": "to_json",
+        "json_decode_method_name": "from_json",
+
+        "json_object_set_string_field": "{name}.set_string_field(\"{variable_name}\", {value})",
+        "json_object_set_number_field": "{name}.set_number_field(\"{variable_name}\", {value})",
+        "json_object_set_integer_field": "{name}.set_integer_field(\"{variable_name}\", {value})",
+        "json_object_set_object_field": "{name}.set_object_field(\"{variable_name}\", {value_typename}.{json_encode_method_name}({value}))",
+        "json_object_set_boolean_field": "{name}.set_boolean_field(\"{variable_name}\", {value})",
+
+        "json_object_get_string_field": "{name}.get_string_field(\"{variable_name}\")",
+        "json_object_get_number_field": "{name}.get_number_field(\"{variable_name}\")",
+        "json_object_get_integer_field": "{name}.get_integer_field(\"{variable_name}\")",
+        "json_object_get_object_field": "{value_typename}.{json_decode_method_name}({name}.get_object_field(\"{variable_name}\"))",
+        "json_object_get_boolean_field": "{name}.get_boolean_field(\"{variable_name}\")",
+
+        "json_object_get_opt_string_field": "{name}.get_string_field(\"{variable_name}\")",
+        "json_object_get_opt_number_field": "{name}.get_number_field(\"{variable_name}\")",
+        "json_object_get_opt_integer_field": "{name}.get_integer_field(\"{variable_name}\")",
+        "json_object_get_opt_object_field": "{value_typename}.{json_decode_method_name}({name}.get_object_field(\"{variable_name}\"))",
+        "json_object_get_opt_boolean_field": "{name}.get_boolean_field(\"{variable_name}\")",
+        "json_object_has_field": "{name}->HasField(\"{variable_name}\")"
+    },
+    "code_generation_config": {
+        "import_module_template": "import {module_name}",
+        "imported_module_name_template": "{module_name}.h",
+        "object_declaration_template": "class {typename}",
+        "any_of_declaration_template": "class {typename}",
+        "statement_close": "",
+        "qualifier_const": "",
+        "qualifier_inline": "",
+        "qualifier_static": "",
+        "variable_declaration_template": "{name}: {typename}",
+        "optional_variable_declaration_template": "{name}: {typename}",
+        "variable_declaration_default_value_template": "{variable_declaration} = {value}",
+        "variable_postfix_reference_template": "",
+        "variable_postfix_pointer_template": "",
+        "variable_declaration_close": "",
+        "variable_assignment_template": "{name} = {value}",
+        "variable_assignment_close": "",
+        "method_declaration_template": "def {name}({args})",
+        "method_return_template": "return {name}",
+        "static_method_template": "@staticmethod\n{method_declaration}",
+        "construct_object_template": "{typename}({args})",
+        "object_constructor_template": "def __init__(self, {args})",
+        "scope_character_open": ":",
+        "scope_charater_close": "",
+        "object_scope_character_open": ":\n\n",
+        "object_scope_character_close": "",
+        "scope_indent_count": 4,
+        "scope_indent_character": " ",
+        "comment_character": "#",
+        "module_imports": [
+            "json",
+            "PythonJSONUtilities",
+            "pydantic",
+            "typing"
+        ],
+        "access_member": "{object_name}.{member_name}",
+        "access_optional_member": "{object_name}.{member_name}",
+        "static_accessor": "{typename}.{member_name}",
+        "file_start": "# THIS IS A GENERATED FILE! DO NOT EDIT!\n",
+
+        "allow_self_type_in_args": false,
+        "any_type": "typing.Any"
+    }
+}

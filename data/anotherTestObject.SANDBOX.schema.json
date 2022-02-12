@@ -1,0 +1,16 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+
+    "$id": "anotherTestObject.SANDBOX.schema.json",
+    "title": "Other Test Object",
+    "type": "object",
+    "description": "This is another test object",
+
+    "properties": {
+        "count": {
+            "type": "integer",
+            "description": "Number of items"
+        }
+    },
+    "required": []
+}

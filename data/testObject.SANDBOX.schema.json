@@ -1,0 +1,56 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+
+    "$id": "testObject.SANDBOX.schema.json",
+    "title": "Test Object",
+    "type": "object",
+    "description": "This is a test object",
+
+    "properties": {
+        "variableA": {
+            "type": "integer",
+            "description": "This property represents an integer. It is not required",
+            "default": 24
+        },
+        "variableB": {
+            "type": "string",
+            "description": "This property is a string. It is required"
+        },
+        "variableC": {
+            "$ref": "anotherTestObject.SANDBOX.schema.json",
+            "description": "This is an object variable"
+        },
+        "variableD": {
+            "description": "enum-like value",
+            "anyOf": [{
+                    "const": "ABC"
+                },
+                {
+                    "const": "XYZ"
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        },
+        "variableE": {
+            "description": "enum-like value int",
+            "anyOf": [{
+                    "const": 2,
+                    "name": "LOW"
+                },
+                {
+                    "const": 4,
+                    "name": "HIGH"
+                },
+                {
+                    "type": "integer"
+                }
+            ]
+        }
+    },
+    "required": [
+        "variableB",
+        "variableD"
+    ]
+}
