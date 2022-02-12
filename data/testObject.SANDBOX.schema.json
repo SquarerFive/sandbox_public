@@ -47,6 +47,13 @@
                     "type": "integer"
                 }
             ]
+        },
+        "arrayVariable": {
+            "description": "This is an array of integers",
+            "type": "array",
+            "items": {
+                "type": "integer"
+            }
         }
     },
     "required": [

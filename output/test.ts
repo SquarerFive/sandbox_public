@@ -2,7 +2,7 @@
 
 
 export class OtherTestObject {
-    // [[GENERATED_OBJECT]] This is another test object
+    // This is another test object
 
 
     // Number of items
@@ -25,7 +25,7 @@ export class VARIABLEE {
 }
 
 export class TestObject {
-    // [[GENERATED_OBJECT]] This is a test object
+    // This is a test object
 
 
     // This property represents an integer. It is not

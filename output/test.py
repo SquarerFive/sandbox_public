@@ -6,7 +6,7 @@ import typing
 
 
 class OtherTestObject :
-    # [[GENERATED_OBJECT]] This is another test object
+    # This is another test object
 
 
     # Number of items
@@ -35,7 +35,7 @@ class OtherTestObject :
 
 
 class TestObject :
-    # [[GENERATED_OBJECT]] This is a test object
+    # This is a test object
 
     class VARIABLED :
         ABC: str = "ABC"

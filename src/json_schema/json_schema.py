@@ -1,7 +1,7 @@
 # Copyright 2022 Aiden Soedjarwo
 
 from optparse import Option
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from enum import Enum
 from typing import *
 import json
@@ -23,18 +23,21 @@ class EncoderDecoderConfig(BaseModel):
     json_object_set_integer_field = """UJson::SetIntegerField({name},"{variable_name}", {value})"""
     json_object_set_object_field = """UJson::SetObjectField({name},"{variable_name}", {value_typename}::{json_encode_method_name}({value}))"""
     json_object_set_boolean_field = """UJson::SetBooleanField({name},"{variable_name}", {value})"""
+    json_object_set_array_field = """UJson::SetArrayField({name},"{variable_name}", {value})"""
 
     json_object_get_string_field = """UJson::GetStringField({name},"{variable_name}")"""
     json_object_get_number_field = """UJson::GetNumberField({name},"{variable_name}")"""
     json_object_get_integer_field = """UJson::GetIntegerField({name},"{variable_name}")"""
     json_object_get_object_field = """{value_typename}::{json_decode_method_name}(UJson::GetObjectFieldOpt({name}, "{variable_name}"))"""
     json_object_get_boolean_field = """UJson::GetBooleanField({name},"{variable_name}")"""
+    json_object_get_array_field = """UJson::GetArrayField({name},"{variable_name}")"""
 
     json_object_get_opt_string_field = """UJson::GetStringFieldOpt({name},"{variable_name}")"""
     json_object_get_opt_number_field = """UJson::GetNumberFieldOpt({name},"{variable_name}")"""
     json_object_get_opt_integer_field = """UJson::GetIntegerFieldOpt({name},"{variable_name}")"""
     json_object_get_opt_object_field = """{value_typename}::{json_decode_method_name}(UJson::GetObjectFieldOpt({name}, "{variable_name}"))"""
     json_object_get_opt_boolean_field = """UJson::GetBooleanFieldOpt({name},"{variable_name}")"""
+    json_object_get_opt_array_field = """UJson::GetArrayFieldOpt<{value_typename}>({name},"{variable_name}")"""
 
     json_object_has_field = """{name}->HasField("{variable_name}")"""
 
@@ -124,8 +127,9 @@ class Config(BaseModel):
     encoder_decoder_config: EncoderDecoderConfig = EncoderDecoderConfig()
     code_generation_config: CodeGenerationConfig = CodeGenerationConfig()
 
+DataTypeAlias = object
 
-class DataType(Enum):
+class DataType:
     STRING = "STRING"
     NUMBER = "NUMBER"
     INTEGER = "INTEGER"
@@ -133,27 +137,61 @@ class DataType(Enum):
     BOOLEAN = "BOOLEAN"
     ARRAY = "ARRAY"
 
+    child_data_type: DataTypeAlias = None
+
+    value = None
+
+    def __init__(self, value: str):
+        self.value = value
+    
+    def __eq__(self, __o: object) -> bool:
+        if isinstance(__o, DataType):
+            return __o.value == self.value
+        elif isinstance(__o, str) or __o == None:
+            return __o == self.value
+
+    def validate(other):
+        return isinstance(other, DataType)
+
     @staticmethod
     def from_string(string: str):
         return {
-            "string": DataType.STRING,
-            "number": DataType.NUMBER,
-            "integer": DataType.INTEGER,
-            "object": DataType.OBJECT,
-            "boolean": DataType.BOOLEAN,
-            "array": DataType.ARRAY
+            "string": DataType(DataType.STRING),
+            "number": DataType(DataType.NUMBER),
+            "integer": DataType(DataType.INTEGER),
+            "object": DataType(DataType.OBJECT),
+            "boolean": DataType(DataType.BOOLEAN),
+            "array": DataType(DataType.ARRAY)
         }[string]
 
     def resolve_data_type(self, spec) -> str:
         spec: Spec = spec
-        return {
-            DataType.STRING: spec.config.data_type_config.string_typename,
-            DataType.NUMBER: spec.config.data_type_config.number_typename,
-            DataType.INTEGER: spec.config.data_type_config.integer_typename,
-            DataType.OBJECT: spec.config.data_type_config.object_typename,
-            DataType.BOOLEAN: spec.config.data_type_config.boolean_typename,
-            DataType.ARRAY: spec.config.data_type_config.array_typename
-        }[self]
+
+        result = None
+
+        if self.value == DataType.STRING:
+            result = spec.config.data_type_config.string_typename
+        elif self.value == DataType.NUMBER:
+            result = spec.config.data_type_config.number_typename
+        elif self.value == DataType.INTEGER:
+            result = spec.config.data_type_config.integer_typename
+        elif self.value == DataType.OBJECT:
+            result = spec.config.data_type_config.object_typename
+        elif self.value == DataType.BOOLEAN:
+            result = spec.config.data_type_config.boolean_typename
+        elif self.value == DataType.ARRAY:
+            result = spec.config.data_type_config.array_typename
+        
+        return result
+
+        # return {
+        #     DataType.STRING: spec.config.data_type_config.string_typename,
+        #     DataType.NUMBER: spec.config.data_type_config.number_typename,
+        #     DataType.INTEGER: spec.config.data_type_config.integer_typename,
+        #     DataType.OBJECT: spec.config.data_type_config.object_typename,
+        #     DataType.BOOLEAN: spec.config.data_type_config.boolean_typename,
+        #     DataType.ARRAY: spec.config.data_type_config.array_typename
+        # }[self]
 
 class Variable(BaseModel):
     name: str
@@ -167,6 +205,37 @@ class Variable(BaseModel):
     default_value: Any
 
     signature: Optional[str]
+
+    @validator('json_data_type')
+    def json_data_type_is_valid(cls, v):
+        if not isinstance(v, DataType):
+            raise ValueError("json_data_type must be of instance `DataType`!")
+        return v
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def resolve_typename(self, spec):
+        if self.data_type == None:
+            if self.reference_type:
+                dependent_spec = spec.get_dependent_spec(self.reference_type)
+                self.data_type = dependent_spec.title_to_typename()
+            else:
+                self.data_type = self.json_data_type.resolve_data_type(spec)
+
+        typename = self.data_type
+
+        has_no_child = self.json_data_type.child_data_type == None
+        child = self.json_data_type.child_data_type
+        while not has_no_child:
+            child: DataType = child
+            typename = typename.format(typename = child.resolve_data_type(spec))
+
+            has_no_child = child.child_data_type == None
+            if not has_no_child:
+                child = child.child_data_type
+        
+        self.data_type = typename
 
     def resolve_signature(self,
                           spec,
@@ -184,16 +253,11 @@ class Variable(BaseModel):
                           ) -> str:
         spec: Spec = spec
 
-        if self.data_type == None:
-            if self.reference_type:
-                dependent_spec = spec.get_dependent_spec(self.reference_type)
-                self.data_type = dependent_spec.title_to_typename()
-            else:
-                self.data_type = self.json_data_type.resolve_data_type(spec)
+        self.resolve_typename(spec)
 
         qualifiers = []
         postfix = ""
-        typename = self.data_type if typename_override == None else typename_override
+        typename = self.data_type if typename_override is None else typename_override
 
         if pointer and reference:
             raise ValueError(
@@ -355,7 +419,7 @@ class Spec:
         return body
 
     def resolve_description(self):
-        desc = f"[[GENERATED_OBJECT]] {self.spec.get('description', '')}"
+        desc = f"{self.spec.get('description', '')}"
         return textwrap.indent('\n'.join(textwrap.wrap(desc, 50)), f"{self.config.code_generation_config.comment_character} ")
 
     def resolve(self):
@@ -370,7 +434,7 @@ class Spec:
             for variableName in properties:
                 variableProperty: dict = properties[variableName]
 
-                def resolve_variable_type_and_possible_values() -> Tuple[str, List[Variable]]:
+                def resolve_variable_type_and_possible_values() -> Tuple[List[str], List[Variable]]:
                     found_type: str = None
                     if (variableProperty.get("type") == None):
                         if (variableProperty.get("anyOf")):
@@ -389,12 +453,28 @@ class Spec:
                                     )
                                     possible_values.append(variable)
 
-                            return found_type, possible_values
-                        return None, []
+                            return [found_type], possible_values
+                        return [None], []
+
+                    elif (variableProperty["type"] == "array"):
+                        # only support root levels for now
+                        return [
+                            variableProperty["type"],
+                            variableProperty["items"]["type"]
+                        ], []
                     else:
-                        return variableProperty["type"], []
+                        return [variableProperty["type"]], []
                 
-                variable_type, possible_values = resolve_variable_type_and_possible_values()
+                variable_types, possible_values = resolve_variable_type_and_possible_values()
+                print(variable_types)
+
+                data_type: DataType = DataType.from_string(variable_types[0] if variable_types[0] != None else 'object')
+                if len(variable_types) > 1:
+                    root_data_type = data_type
+                    for variable_type in variable_types[1:]:
+                        child_data_type = DataType.from_string(variable_type)
+                        root_data_type.child_data_type = child_data_type
+                        root_data_type = child_data_type
 
                 if len(possible_values) > 0:
                     any_of_variables.append(AnyOf(typename = variableName.upper(), possible_values = possible_values))
@@ -402,8 +482,7 @@ class Spec:
                 variable = Variable(
                     name=variableName,
                     description=variableProperty["description"],
-                    json_data_type=DataType.from_string(
-                        variable_type or 'object'),
+                    json_data_type=data_type,
                     required=variableName in self.required_variable_names,
                     default_value=variableProperty.get("default"),
                     reference_type=variableProperty.get("$ref")
@@ -450,7 +529,7 @@ class Spec:
         self_as_variable = Variable(
             name=f"In{self_typename}",
             description="",
-            json_data_type=DataType.OBJECT,
+            json_data_type=DataType(DataType.OBJECT),
             data_type=self_typename,
             required=False
         )
@@ -458,7 +537,7 @@ class Spec:
         json_object_variable = Variable(
             name=f"Out{self_typename}JSON",
             description="",
-            json_data_type=DataType.OBJECT,
+            json_data_type=DataType(DataType.OBJECT),
             data_type=self.config.encoder_decoder_config.json_object_typename,
             required=True,
             default_value=self.config.encoder_decoder_config.json_object_assign_value
@@ -467,7 +546,7 @@ class Spec:
         _optional_json_object_variable = Variable(
             name=f"Out{self_typename}JSON",
             description="",
-            json_data_type=DataType.OBJECT,
+            json_data_type=DataType(DataType.OBJECT),
             data_type=self.config.encoder_decoder_config.json_object_typename,
             required=False,
             default_value=self.config.encoder_decoder_config.json_object_assign_value
@@ -504,10 +583,11 @@ class Spec:
             DataType.INTEGER: self.config.encoder_decoder_config.json_object_set_integer_field,
             DataType.OBJECT: self.config.encoder_decoder_config.json_object_set_object_field,
             DataType.BOOLEAN: self.config.encoder_decoder_config.json_object_set_boolean_field,
+            DataType.ARRAY: self.config.encoder_decoder_config.json_object_set_array_field
         }
 
         assignments = [
-            json_set_mappings[v.json_data_type].format(
+            json_set_mappings[v.json_data_type.value].format(
                 name=json_object_variable.name,
                 variable_name=v.name,
                 value=self.config.code_generation_config.access_optional_member.format(
@@ -536,7 +616,7 @@ class Spec:
         self_as_variable = Variable(
             name=f"Out{self_typename}",
             description="",
-            json_data_type=DataType.OBJECT,
+            json_data_type=DataType(DataType.OBJECT),
             data_type=self_typename,
             required=False
         )
@@ -544,7 +624,7 @@ class Spec:
         json_object_variable = Variable(
             name=f"In{self_typename}JSON",
             description="",
-            json_data_type=DataType.OBJECT,
+            json_data_type=DataType(DataType.OBJECT),
             data_type=self.config.encoder_decoder_config.json_object_typename,
             required=False,
             default_value=self.config.encoder_decoder_config.json_object_assign_value
@@ -575,6 +655,7 @@ class Spec:
             DataType.INTEGER: self.config.encoder_decoder_config.json_object_get_integer_field,
             DataType.OBJECT: self.config.encoder_decoder_config.json_object_get_object_field,
             DataType.BOOLEAN: self.config.encoder_decoder_config.json_object_get_boolean_field,
+            DataType.ARRAY: self.config.encoder_decoder_config.json_object_get_array_field
         }
 
         json_get_opt_mappings = {
@@ -583,10 +664,11 @@ class Spec:
             DataType.INTEGER: self.config.encoder_decoder_config.json_object_get_opt_integer_field,
             DataType.OBJECT: self.config.encoder_decoder_config.json_object_get_opt_object_field,
             DataType.BOOLEAN: self.config.encoder_decoder_config.json_object_get_opt_boolean_field,
+            DataType.ARRAY: self.config.encoder_decoder_config.json_object_get_opt_array_field
         }
 
         construction_args = ', '.join([
-            (json_get_mappings[v.json_data_type] if v.required else json_get_opt_mappings[v.json_data_type])
+            (json_get_mappings[v.json_data_type.value] if v.required else json_get_opt_mappings[v.json_data_type.value])
             .format(
                 name=json_object_variable.name,
                 variable_name=v.name,

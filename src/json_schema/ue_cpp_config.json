@@ -55,7 +55,7 @@
         "construct_object_template": "{typename}({args})",
         "scope_character_open": "{",
         "scope_charater_close": "}",
-        "object_scope_character_open": "{\n\n",
+        "object_scope_character_open": "{\n",
         "object_scope_character_close": "};",
         "scope_indent_count": 4,
         "scope_indent_character": " ",
