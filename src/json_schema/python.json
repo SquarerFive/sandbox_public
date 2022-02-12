@@ -76,6 +76,7 @@
         "file_start": "# THIS IS A GENERATED FILE! DO NOT EDIT!\n",
 
         "allow_self_type_in_args": false,
-        "any_type": "typing.Any"
+        "any_type": "typing.Any",
+        "self_access": "self.{member_name}"
     }
 }

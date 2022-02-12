@@ -106,6 +106,8 @@ class CodeGenerationConfig(BaseModel):
     allow_self_type_in_args: bool = True
     any_type: str = "std::any"
 
+    self_access: str = "this->{member_name}"
+
 
 class Config(BaseModel):
     data_type_config: DataTypeConfig = DataTypeConfig()
@@ -306,7 +308,7 @@ class Spec:
             self.variables, key=lambda v: 1 if v.default_value != None else 0)
 
         def format_name_fn(name: str) -> str:
-            return f"In{name}"
+            return f"In_{name}"
 
         context_variables = [
             v for v in sorted_variables if v.name in self.required_variable_names or not only_required
@@ -325,7 +327,7 @@ class Spec:
 
         for i, variable in enumerate(context_variables):
             body += self.indent(
-                variable.resolve_assignment(self, "In"+variable.name), 1
+                self.config.code_generation_config.self_access.format(member_name=variable.resolve_assignment(self, "In_"+variable.name)), 1
             )
             if i < len(context_variables):
                 body += "\n"

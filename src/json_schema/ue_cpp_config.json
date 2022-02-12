@@ -68,6 +68,10 @@
         "access_member": "{object_name}.{member_name}",
         "access_optional_member": "{object_name}->{member_name}",
         "static_accessor": "{typename}::{member_name}",
-        "file_start": "// THIS IS A GENERATED FILE! DO NOT EDIT!\n\n#pragma once\n\n"
+        "file_start": "// THIS IS A GENERATED FILE! DO NOT EDIT!\n\n#pragma once\n\n",
+
+        "allow_self_type_in_args": true,
+        "any_type": "std::any",
+        "self_access": "this->{member_name}"
     }
 }
