@@ -41,7 +41,7 @@
         "import_all_template": "import {{{module_name}}} from \"./{module_name}\"",
         "object_declaration_template": "export class {typename}",
         "any_of_declaration_template": "class {typename}",
-        "statement_close": "",
+        "statement_close": ";",
         "qualifier_const": "",
         "qualifier_inline": "",
         "qualifier_static": "static",

@@ -49,16 +49,16 @@ export class TestObject {
         this.variableD = In_variableD;
         this.variableE = In_variableE;
 
-        this.Validate()
+        this.Validate();
     }
 
 
     Validate(): void {
         if (!(this.variableD==VARIABLED.ABC||this.variableD==VARIABLED.XYZ)) {
-            console.error("Failed to validate field variableD!")
+            console.error("Failed to validate field variableD!");
         }
         if (!(this.variableE==VARIABLEE.LOW||this.variableE==VARIABLEE.HIGH)) {
-            console.error("Failed to validate field variableE!")
+            console.error("Failed to validate field variableE!");
         }
     }
 }
