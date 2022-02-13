@@ -38,6 +38,7 @@
     "code_generation_config": {
         "import_module_template": "import {module_name}",
         "imported_module_name_template": "{module_name}.h",
+        "import_all_template": "import {{{module_name}}} from \"./{module_name}\"",
         "object_declaration_template": "export class {typename}",
         "any_of_declaration_template": "class {typename}",
         "statement_close": "",
@@ -78,7 +79,9 @@
 
         "declare_anyof_outside_self": true,
         "mark_as_optional_with_default_value_in_args": false,
-        "throw_error_template": "console.error(\"{message}\")"
+        "throw_error_template": "console.error(\"{message}\")",
+
+        "file_extension": ".ts"
     },
 
     "include_serializers_and_deserializers": false

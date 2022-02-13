@@ -1,6 +1,5 @@
 # Copyright 2022 Aiden Soedjarwo
 
-from optparse import Option
 from pydantic import BaseModel, validator
 from enum import Enum
 from typing import *
@@ -56,8 +55,30 @@ class DataTypeConfig(BaseModel):
 
 
 class CodeGenerationConfig(BaseModel):
-    import_module_template: str = """#include "{module_name}" """
+    # Importing
+    import_module_template: str = """#include "{module_name}.h" """
+    import_from_module_template: str = """#include "{module_name}.h" """
+    import_all_template: str = """#include "{module_name}.h" """
+    
     imported_module_name_template: str = """{module_name}.h"""
+
+    module_imports: List[str] = [
+        "CoreMinimal.h",
+        "Dom/JsonObject.h",
+        "UnrealJSONUtilities.h"
+    ]
+
+    # ie, from {module_name} import *
+    module_imports_all: List[str] = [
+
+    ],
+
+    # ie, from {module_name} import {modules}
+    module_imports_from: Dict[str, List[str]] = [
+
+    ]
+    # 
+
     object_declaration_template: str = "struct {typename}"
 
     statement_close: str = ";"
@@ -114,12 +135,6 @@ class CodeGenerationConfig(BaseModel):
 
     file_start = f"{comment_character} THIS IS A GENERATED FILE! DO NOT EDIT!\n\n#pragma once\n\n"
 
-    module_imports: List[str] = [
-        "CoreMinimal.h",
-        "Dom/JsonObject.h",
-        "UnrealJSONUtilities.h"
-    ]
-
     allow_self_type_in_args: bool = True
     any_type: str = "std::any"
 
@@ -137,6 +152,9 @@ class CodeGenerationConfig(BaseModel):
     throw_error_template: str = 'UE_LOG(LogTemp, Fatal, TEXT("{message}"))'
     validate_method_name: str = "Validate"
     add_validator: bool = True
+
+    # output
+    file_extension: str = ".h"
 
 
 class Config(BaseModel):
@@ -620,7 +638,7 @@ class Spec:
                 self.body += "\n\n"
                 self.body += self.indent(self.create_json_decoder(), 1)
                 self.body += "\n"
-                
+
             if self.has_validator():
                 self.body += "\n"
                 self.body += self.indent(self.create_validator(), 1)
@@ -841,6 +859,34 @@ class Spec:
 
         return body
 
+def spec_as_file(spec: Spec, config: Config, context_dir: str, output_dir: str):
+    source = """"""
+    source += config.code_generation_config.file_start
+
+    deps = spec.get_dependencies()
+
+    from_import_all = []
+
+    for d in deps:
+        with open(os.path.join(context_dir, d), 'r') as f:
+            spec_data = json.load(f)
+        dep_spec = Spec(spec_data, context_dir, config)
+        from_import_all.append(dep_spec.title_to_typename())
+
+        spec_as_file(dep_spec, config, context_dir, output_dir)
+    
+    for module in config.code_generation_config.module_imports:
+        source += config.code_generation_config.import_module_template.format(
+            module_name=module) + "\n"
+
+    source += '\n'.join([config.code_generation_config.import_all_template.format(module_name = f) for f in from_import_all])
+    
+    source += '\n\n'
+
+    source += spec.resolve()
+    
+    with open(os.path.join(output_dir, spec.title_to_typename() + config.code_generation_config.file_extension), 'w') as f:
+        f.write(source)
 
 if __name__ == "__main__":
 
@@ -859,32 +905,8 @@ if __name__ == "__main__":
 
     with open(spec_fp, 'r') as f:
         data = json.load(f)
-
-    source = ""
-
     config = Config.parse_file(args.config_file)
-
-    # with open("./src/json_schema/ue_cpp_config.json", 'w') as f:
-    #     json.dump(config.dict(), f)
-
-    source += config.code_generation_config.file_start
-
-    for module in config.code_generation_config.module_imports:
-        source += config.code_generation_config.import_module_template.format(
-            module_name=module) + "\n"
-
-    source += "\n\n"
 
     spec = Spec(data, spec_dir, config=config)
 
-    for dependent_spec in spec.get_dependencies():
-        with open(os.path.join(spec_dir, dependent_spec), 'r') as f:
-            dependent_spec_data = json.load(f)
-        source += Spec(dependent_spec_data, spec_dir, config).resolve()
-
-    source += spec.resolve()
-
-    # print(source)
-
-    with open(args.output_file, 'w') as f:
-        f.write(source)
+    spec_as_file(spec, config, spec_dir, './output/')

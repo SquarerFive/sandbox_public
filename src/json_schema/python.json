@@ -41,6 +41,7 @@
     "code_generation_config": {
         "import_module_template": "import {module_name}",
         "imported_module_name_template": "{module_name}.h",
+        "import_all_template": "from {module_name} import *",
         "object_declaration_template": "class {typename}",
         "any_of_declaration_template": "class {typename}",
         "statement_close": "",
@@ -94,7 +95,8 @@
         "throw_error_template": "raise ValueError(\"{message}\")",
         "validate_method_name": "validate",
 
-        "declare_anyof_outside_self": true
+        "declare_anyof_outside_self": true,
+        "file_extension": ".py"
     },
 
     "include_serializers_and_deserializers": true
