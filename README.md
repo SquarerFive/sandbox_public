@@ -14,7 +14,6 @@ languages already supported are:
 - Typescript: `typescript.json`
 
 ### Notes
-- Array of objects are not supported yet!
 - Only a small subset of the schema is currently supported.
 
 ### Examples
@@ -34,20 +33,19 @@ import pydantic
 import typing
 
 
-class OtherTestObject :
+class OtherTestObject:
     # This is another test object
-
 
     # Number of items
     count: int
 
-    def __init__(self, In_count: int) :
-        self.count = In_count
+    def __init__(self, in_count: int):
+        self.count = in_count
 
 
     # JSON Encoders/Decoders
     @staticmethod
-    def to_json(InOtherTestObject: typing.Any) :
+    def to_json(InOtherTestObject: typing.Any):
         if InOtherTestObject == None: return None
         OutOtherTestObjectJSON: PythonJSONUtilities.JsonUtilities = PythonJSONUtilities.JsonUtilities()
 
@@ -56,24 +54,25 @@ class OtherTestObject :
 
 
     @staticmethod
-    def from_json(InOtherTestObjectJSON: PythonJSONUtilities.JsonUtilities) :
+    def from_json(InOtherTestObjectJSON: PythonJSONUtilities.JsonUtilities):
         if InOtherTestObjectJSON == None: return None
 
         return OtherTestObject(InOtherTestObjectJSON.get_integer_field("count"))
 
 
 
-class TestObject :
+class VARIABLED:
+    ABC: str = "ABC"
+    XYZ: str = "XYZ"
+
+
+class VARIABLEE:
+    LOW: int = 2
+    HIGH: int = 4
+
+
+class TestObject:
     # This is a test object
-
-    class VARIABLED :
-        ABC: str = "ABC"
-        XYZ: str = "XYZ"
-
-    class VARIABLEE :
-        LOW: int = 2
-        HIGH: int = 4
-
 
     # This property represents an integer. It is not
     # required
@@ -86,10 +85,10 @@ class TestObject :
     variableC: OtherTestObject
 
     # enum-like value
-    variableD: str
+    variableD: str = VARIABLED.ABC
 
     # enum-like value int
-    variableE: int
+    variableE: int = VARIABLEE.LOW
 
     # This is an array of integers
     arrayVariable: typing.List[int]
@@ -97,19 +96,25 @@ class TestObject :
     # This is an array of arrays of integers
     arrayOfArrays: typing.List[typing.List[int]]
 
-    def __init__(self, In_variableB: str, In_variableD: str, In_variableC: OtherTestObject, In_variableE: int, In_arrayVariable: typing.List[int], In_arrayOfArrays: typing.List[typing.List[int]], In_variableA: int = 24) :
-        self.variableB = In_variableB
-        self.variableD = In_variableD
-        self.variableC = In_variableC
-        self.variableE = In_variableE
-        self.arrayVariable = In_arrayVariable
-        self.arrayOfArrays = In_arrayOfArrays
-        self.variableA = In_variableA
+    # This is an array of objects
+    arrayOfObjects: typing.List[OtherTestObject]
+
+    def __init__(self, in_variableB: str, in_variableC: OtherTestObject, in_arrayVariable: typing.List[int], in_arrayOfArrays: typing.List[typing.List[int]], in_arrayOfObjects: typing.List[OtherTestObject], in_variableA: int = 24, in_variableD: str = VARIABLED.ABC, in_variableE: int = VARIABLEE.LOW):
+        self.variableB = in_variableB
+        self.variableC = in_variableC
+        self.arrayVariable = in_arrayVariable
+        self.arrayOfArrays = in_arrayOfArrays
+        self.arrayOfObjects = in_arrayOfObjects
+        self.variableA = in_variableA
+        self.variableD = in_variableD
+        self.variableE = in_variableE
+
+        self.validate()
 
 
     # JSON Encoders/Decoders
     @staticmethod
-    def to_json(InTestObject: typing.Any) :
+    def to_json(InTestObject: typing.Any):
         if InTestObject == None: return None
         OutTestObjectJSON: PythonJSONUtilities.JsonUtilities = PythonJSONUtilities.JsonUtilities()
 
@@ -120,20 +125,30 @@ class TestObject :
         OutTestObjectJSON.set_integer_field("variableE", InTestObject.variableE)
         OutTestObjectJSON.set_array_field("arrayVariable", InTestObject.arrayVariable)
         OutTestObjectJSON.set_array_field("arrayOfArrays", InTestObject.arrayOfArrays)
+        OutTestObjectJSON.set_array_field("arrayOfObjects", InTestObject.arrayOfObjects)
         return OutTestObjectJSON
 
 
     @staticmethod
-    def from_json(InTestObjectJSON: PythonJSONUtilities.JsonUtilities) :
+    def from_json(InTestObjectJSON: PythonJSONUtilities.JsonUtilities):
         if InTestObjectJSON == None: return None
 
         return TestObject(InTestObjectJSON.get_string_field("variableB"),
-             InTestObjectJSON.get_string_field("variableD"),
              OtherTestObject.from_json(InTestObjectJSON.get_object_field("variableC")),
-             InTestObjectJSON.get_integer_field("variableE"),
              InTestObjectJSON.get_array_field("arrayVariable"),
              InTestObjectJSON.get_array_field("arrayOfArrays"),
-             InTestObjectJSON.get_integer_field("variableA"))
+             InTestObjectJSON.get_array_field("arrayOfObjects"),
+             InTestObjectJSON.get_integer_field("variableA"),
+             InTestObjectJSON.get_string_field("variableD"),
+             InTestObjectJSON.get_integer_field("variableE"))
+
+
+    def validate(self, ):
+        if ( not (self.variableD == VARIABLED.ABC or self.variableD == VARIABLED.XYZ)):
+            raise ValueError("Failed to validate field variableD!")
+
+        if ( not (self.variableE == VARIABLEE.LOW or self.variableE == VARIABLEE.HIGH)):
+            raise ValueError("Failed to validate field variableE!")
 ```
 
 Generate UE4-compatible C++ code:
@@ -154,15 +169,15 @@ Results in:
 #include "UnrealJSONUtilities.h" 
 
 
-struct OtherTestObject {
+struct OtherTestObject : public BaseObject {
     // This is another test object
-
 
     // Number of items
     TOptional<int64> count;
 
     OtherTestObject(const TOptional<int64>& In_count) {
         this->count = In_count;
+
     }
 
     // JSON Encoders/Decoders
@@ -181,9 +196,8 @@ struct OtherTestObject {
     }
 };
 
-struct TestObject {
+struct TestObject : public BaseObject {
     // This is a test object
-
     struct VARIABLED {
         inline static const FString ABC = "ABC";
         inline static const FString XYZ = "XYZ";
@@ -204,10 +218,10 @@ struct TestObject {
     TOptional<OtherTestObject> variableC;
 
     // enum-like value
-    FString variableD;
+    FString variableD = VARIABLED::ABC;
 
     // enum-like value int
-    TOptional<int64> variableE;
+    TOptional<int64> variableE = VARIABLEE::LOW;
 
     // This is an array of integers
     TOptional<TArray<int64>> arrayVariable;
@@ -215,14 +229,20 @@ struct TestObject {
     // This is an array of arrays of integers
     TOptional<TArray<TArray<int64>>> arrayOfArrays;
 
-    TestObject(const FString& In_variableB, const FString& In_variableD, const TOptional<OtherTestObject>& In_variableC, const TOptional<int64>& In_variableE, const TOptional<TArray<int64>>& In_arrayVariable, const TOptional<TArray<TArray<int64>>>& In_arrayOfArrays, const TOptional<int64>& In_variableA = 24) {
+    // This is an array of objects
+    TOptional<TArray<OtherTestObject>> arrayOfObjects;
+
+    TestObject(const FString& In_variableB, const TOptional<OtherTestObject>& In_variableC, const TOptional<TArray<int64>>& In_arrayVariable, const TOptional<TArray<TArray<int64>>>& In_arrayOfArrays, const TOptional<TArray<OtherTestObject>>& In_arrayOfObjects, const TOptional<int64>& In_variableA = 24, const FString& In_variableD = VARIABLED::ABC, const TOptional<int64>& In_variableE = VARIABLEE::LOW) {
         this->variableB = In_variableB;
-        this->variableD = In_variableD;
         this->variableC = In_variableC;
-        this->variableE = In_variableE;
         this->arrayVariable = In_arrayVariable;
         this->arrayOfArrays = In_arrayOfArrays;
+        this->arrayOfObjects = In_arrayOfObjects;
         this->variableA = In_variableA;
+        this->variableD = In_variableD;
+        this->variableE = In_variableE;
+
+        this->Validate();
     }
 
     // JSON Encoders/Decoders
@@ -237,6 +257,7 @@ struct TestObject {
         UJson::SetIntegerField(OutTestObjectJSON,"variableE", InTestObject->variableE);
         UJson::SetArrayField(OutTestObjectJSON,"arrayVariable", InTestObject->arrayVariable);
         UJson::SetArrayField(OutTestObjectJSON,"arrayOfArrays", InTestObject->arrayOfArrays);
+        UJson::SetArrayField(OutTestObjectJSON,"arrayOfObjects", InTestObject->arrayOfObjects);
         return OutTestObjectJSON;
     }
 
@@ -244,12 +265,23 @@ struct TestObject {
         RETURN_NULL_OBJECT_IF_NOT_EXIST(InTestObjectJSON)
 
         return TestObject(UJson::GetStringField(InTestObjectJSON,"variableB"),
-             UJson::GetStringField(InTestObjectJSON,"variableD"),
              OtherTestObject::FromJSON(UJson::GetObjectFieldOpt(InTestObjectJSON,
-             "variableC")), UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
+             "variableC")),
              UJson::GetArrayFieldOpt<TArray<int64>>(InTestObjectJSON,"arrayVariable"),
              UJson::GetArrayFieldOpt<TArray<TArray<int64>>>(InTestObjectJSON,"arrayOfArrays"),
-             UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"));
+             UJson::GetArrayFieldOpt<TArray<OtherTestObject>>(InTestObjectJSON,"arrayOfObjects"),
+             UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"),
+             UJson::GetStringField(InTestObjectJSON,"variableD"),
+             UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"));
+    }
+
+    void Validate() {
+        if (!(this->variableD==VARIABLED::ABC||this->variableD==VARIABLED::XYZ)) {
+            UE_LOG(LogTemp, Fatal, TEXT("Failed to validate field variableD!"));
+        }
+        if (!(this->variableE==VARIABLEE::LOW||this->variableE==VARIABLEE::HIGH)) {
+            UE_LOG(LogTemp, Fatal, TEXT("Failed to validate field variableE!"));
+        }
     }
 };
 ```
@@ -265,8 +297,7 @@ Resuts in:
 
 
 export class OtherTestObject {
-    // [[GENERATED_OBJECT]] This is another test object
-
+    // This is another test object
 
     // Number of items
     count?: number;
@@ -277,19 +308,18 @@ export class OtherTestObject {
 
 }
 
-export class VARIABLED {
+class VARIABLED {
     static ABC: string = "ABC";
     static XYZ: string = "XYZ";
 }
 
-export class VARIABLEE {
+class VARIABLEE {
     static LOW: number = 2;
     static HIGH: number = 4;
 }
 
 export class TestObject {
-    // [[GENERATED_OBJECT]] This is a test object
-
+    // This is a test object
 
     // This property represents an integer. It is not
     // required
@@ -302,18 +332,41 @@ export class TestObject {
     variableC?: OtherTestObject;
 
     // enum-like value
-    variableD: string;
+    variableD: string = VARIABLED.ABC;
 
     // enum-like value int
-    variableE?: number;
+    variableE?: number = VARIABLEE.LOW;
 
-    constructor(In_variableB: string, In_variableD: string, In_variableC?: OtherTestObject, In_variableE?: number, In_variableA: number = 24) {
+    // This is an array of integers
+    arrayVariable?: Array<number>;
+
+    // This is an array of arrays of integers
+    arrayOfArrays?: Array<Array<number>>;
+
+    // This is an array of objects
+    arrayOfObjects?: Array<OtherTestObject>;
+
+    constructor(In_variableB: string, In_variableC?: OtherTestObject, In_arrayVariable?: Array<number>, In_arrayOfArrays?: Array<Array<number>>, In_arrayOfObjects?: Array<OtherTestObject>, In_variableA: number = 24, In_variableD: string = VARIABLED.ABC, In_variableE: number = VARIABLEE.LOW) {
         this.variableB = In_variableB;
-        this.variableD = In_variableD;
         this.variableC = In_variableC;
-        this.variableE = In_variableE;
+        this.arrayVariable = In_arrayVariable;
+        this.arrayOfArrays = In_arrayOfArrays;
+        this.arrayOfObjects = In_arrayOfObjects;
         this.variableA = In_variableA;
+        this.variableD = In_variableD;
+        this.variableE = In_variableE;
+
+        this.Validate()
     }
 
+
+    Validate(): void {
+        if (!(this.variableD==VARIABLED.ABC||this.variableD==VARIABLED.XYZ)) {
+            console.error("Failed to validate field variableD!")
+        }
+        if (!(this.variableE==VARIABLEE.LOW||this.variableE==VARIABLEE.HIGH)) {
+            console.error("Failed to validate field variableE!")
+        }
+    }
 }
 ```
