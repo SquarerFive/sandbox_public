@@ -4,7 +4,6 @@
 export class OtherTestObject {
     // This is another test object
 
-
     // Number of items
     count?: number;
 
@@ -27,7 +26,6 @@ export class VARIABLEE {
 export class TestObject {
     // This is a test object
 
-
     // This property represents an integer. It is not
     // required
     variableA?: number = 24;
@@ -39,10 +37,10 @@ export class TestObject {
     variableC?: OtherTestObject;
 
     // enum-like value
-    variableD: string;
+    variableD: string = VARIABLED.ABC;
 
     // enum-like value int
-    variableE?: number;
+    variableE?: number = VARIABLEE.LOW;
 
     // This is an array of integers
     arrayVariable?: Array<number>;
@@ -50,14 +48,18 @@ export class TestObject {
     // This is an array of arrays of integers
     arrayOfArrays?: Array<Array<number>>;
 
-    constructor(In_variableB: string, In_variableD: string, In_variableC?: OtherTestObject, In_variableE?: number, In_arrayVariable?: Array<number>, In_arrayOfArrays?: Array<Array<number>>, In_variableA: number = 24) {
+    // This is an array of objects
+    arrayOfObjects?: Array<OtherTestObject>;
+
+    constructor(In_variableB: string, In_variableC?: OtherTestObject, In_arrayVariable?: Array<number>, In_arrayOfArrays?: Array<Array<number>>, In_arrayOfObjects?: Array<OtherTestObject>, In_variableA: number = 24, In_variableD: string = VARIABLED.ABC, In_variableE: number = VARIABLEE.LOW) {
         this.variableB = In_variableB;
-        this.variableD = In_variableD;
         this.variableC = In_variableC;
-        this.variableE = In_variableE;
         this.arrayVariable = In_arrayVariable;
         this.arrayOfArrays = In_arrayOfArrays;
+        this.arrayOfObjects = In_arrayOfObjects;
         this.variableA = In_variableA;
+        this.variableD = In_variableD;
+        this.variableE = In_variableE;
     }
 
 }

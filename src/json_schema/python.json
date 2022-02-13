@@ -55,7 +55,8 @@
         "variable_declaration_close": "",
         "variable_assignment_template": "{name} = {value}",
         "variable_assignment_close": "",
-        "method_declaration_template": "def {name}({args})",
+        "method_declaration_template": "def {name}(self, {args})",
+        "static_method_declaration_template": "def {name}({args})",
         "method_return_template": "return {name}",
         "static_method_template": "@staticmethod\n{method_declaration}",
         "construct_object_template": "{typename}({args})",
@@ -80,7 +81,20 @@
 
         "allow_self_type_in_args": false,
         "any_type": "typing.Any",
-        "self_access": "self.{member_name}"
+        "self_access": "self.{member_name}",
+
+        "input_argument_prefix": "in_",
+
+        "conditional_or": " or ",
+        "conditional_and": " and ",
+        "conditional_equal": " == ",
+        "conditional_not": " not ",
+        "conditional_if_template": "if ({condition})",
+
+        "throw_error_template": "raise ValueError(\"{message}\")",
+        "validate_method_name": "validate",
+
+        "declare_anyof_outside_self": true
     },
 
     "include_serializers_and_deserializers": true

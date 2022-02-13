@@ -5,20 +5,19 @@ import pydantic
 import typing
 
 
-class OtherTestObject :
+class OtherTestObject:
     # This is another test object
-
 
     # Number of items
     count: int
 
-    def __init__(self, In_count: int) :
-        self.count = In_count
+    def __init__(self, in_count: int):
+        self.count = in_count
 
 
     # JSON Encoders/Decoders
     @staticmethod
-    def to_json(InOtherTestObject: typing.Any) :
+    def to_json(InOtherTestObject: typing.Any):
         if InOtherTestObject == None: return None
         OutOtherTestObjectJSON: PythonJSONUtilities.JsonUtilities = PythonJSONUtilities.JsonUtilities()
 
@@ -27,24 +26,25 @@ class OtherTestObject :
 
 
     @staticmethod
-    def from_json(InOtherTestObjectJSON: PythonJSONUtilities.JsonUtilities) :
+    def from_json(InOtherTestObjectJSON: PythonJSONUtilities.JsonUtilities):
         if InOtherTestObjectJSON == None: return None
 
         return OtherTestObject(InOtherTestObjectJSON.get_integer_field("count"))
 
 
 
-class TestObject :
+class VARIABLED:
+    ABC: str = "ABC"
+    XYZ: str = "XYZ"
+
+
+class VARIABLEE:
+    LOW: int = 2
+    HIGH: int = 4
+
+
+class TestObject:
     # This is a test object
-
-    class VARIABLED :
-        ABC: str = "ABC"
-        XYZ: str = "XYZ"
-
-    class VARIABLEE :
-        LOW: int = 2
-        HIGH: int = 4
-
 
     # This property represents an integer. It is not
     # required
@@ -57,10 +57,10 @@ class TestObject :
     variableC: OtherTestObject
 
     # enum-like value
-    variableD: str
+    variableD: str = VARIABLED.ABC
 
     # enum-like value int
-    variableE: int
+    variableE: int = VARIABLEE.LOW
 
     # This is an array of integers
     arrayVariable: typing.List[int]
@@ -68,19 +68,25 @@ class TestObject :
     # This is an array of arrays of integers
     arrayOfArrays: typing.List[typing.List[int]]
 
-    def __init__(self, In_variableB: str, In_variableD: str, In_variableC: OtherTestObject, In_variableE: int, In_arrayVariable: typing.List[int], In_arrayOfArrays: typing.List[typing.List[int]], In_variableA: int = 24) :
-        self.variableB = In_variableB
-        self.variableD = In_variableD
-        self.variableC = In_variableC
-        self.variableE = In_variableE
-        self.arrayVariable = In_arrayVariable
-        self.arrayOfArrays = In_arrayOfArrays
-        self.variableA = In_variableA
+    # This is an array of objects
+    arrayOfObjects: typing.List[OtherTestObject]
+
+    def __init__(self, in_variableB: str, in_variableC: OtherTestObject, in_arrayVariable: typing.List[int], in_arrayOfArrays: typing.List[typing.List[int]], in_arrayOfObjects: typing.List[OtherTestObject], in_variableA: int = 24, in_variableD: str = VARIABLED.ABC, in_variableE: int = VARIABLEE.LOW):
+        self.variableB = in_variableB
+        self.variableC = in_variableC
+        self.arrayVariable = in_arrayVariable
+        self.arrayOfArrays = in_arrayOfArrays
+        self.arrayOfObjects = in_arrayOfObjects
+        self.variableA = in_variableA
+        self.variableD = in_variableD
+        self.variableE = in_variableE
+
+        self.validate()
 
 
     # JSON Encoders/Decoders
     @staticmethod
-    def to_json(InTestObject: typing.Any) :
+    def to_json(InTestObject: typing.Any):
         if InTestObject == None: return None
         OutTestObjectJSON: PythonJSONUtilities.JsonUtilities = PythonJSONUtilities.JsonUtilities()
 
@@ -91,20 +97,31 @@ class TestObject :
         OutTestObjectJSON.set_integer_field("variableE", InTestObject.variableE)
         OutTestObjectJSON.set_array_field("arrayVariable", InTestObject.arrayVariable)
         OutTestObjectJSON.set_array_field("arrayOfArrays", InTestObject.arrayOfArrays)
+        OutTestObjectJSON.set_array_field("arrayOfObjects", InTestObject.arrayOfObjects)
         return OutTestObjectJSON
 
 
     @staticmethod
-    def from_json(InTestObjectJSON: PythonJSONUtilities.JsonUtilities) :
+    def from_json(InTestObjectJSON: PythonJSONUtilities.JsonUtilities):
         if InTestObjectJSON == None: return None
 
         return TestObject(InTestObjectJSON.get_string_field("variableB"),
-             InTestObjectJSON.get_string_field("variableD"),
              OtherTestObject.from_json(InTestObjectJSON.get_object_field("variableC")),
-             InTestObjectJSON.get_integer_field("variableE"),
              InTestObjectJSON.get_array_field("arrayVariable"),
              InTestObjectJSON.get_array_field("arrayOfArrays"),
-             InTestObjectJSON.get_integer_field("variableA"))
+             InTestObjectJSON.get_array_field("arrayOfObjects"),
+             InTestObjectJSON.get_integer_field("variableA"),
+             InTestObjectJSON.get_string_field("variableD"),
+             InTestObjectJSON.get_integer_field("variableE"))
+
+
+    def validate(self, ):
+        if ( not (self.variableD == VARIABLED.ABC or self.variableD == VARIABLED.XYZ)):
+            raise ValueError("Failed to validate field variableD!")
+
+        if ( not (self.variableE == VARIABLEE.LOW or self.variableE == VARIABLEE.HIGH)):
+            raise ValueError("Failed to validate field variableE!")
+
 
 
 

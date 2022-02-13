@@ -64,6 +64,13 @@
                     "type": "integer"
                 }
             }
+        },
+        "arrayOfObjects": {
+            "description": "This is an array of objects",
+            "type": "array",
+            "items": {
+                "$ref": "anotherTestObject.SANDBOX.schema.json"
+            }
         }
     },
     "required": [

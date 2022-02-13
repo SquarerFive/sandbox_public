@@ -8,6 +8,15 @@
 #define RETURN_NULL_JSONOBJECT_IF_NOT_EXIST(val) if (!val.IsSet())return TOptional<TSharedPtr<FJsonObject>>{};
 #define RETURN_NULL_OBJECT_IF_NOT_EXIST(val) if (!val.IsSet())return {};
 #define FIELD_REQUIRED(json_object, field) ensure(json_object->HasField(field));
+
+
+
+class BaseObject {
+public:
+	static TOptional<TSharedPtr<FJsonObject>> ToJSON(const TOptional<BaseObject>& InObject) {};
+	static TOptional<BaseObject> FromJSON(const TOptional<TSharedPtr<FJsonObject>>& InJsonObject) {};
+};
+
 class UJson {
 public:
 
@@ -153,6 +162,17 @@ public:
 				);
 			}
 		}
+		else if constexpr (TIsDerivedFrom<T, BaseObject>::Value) {
+			for (const auto& Value : Values) {
+				JsonValues.Add(
+					MakeShareable(
+						new FJsonValueObject(
+							*T::ToJSON(Value)
+						)
+					)
+				);
+			}
+		}
 		else {
 			// Is object
 			for (const auto& Value : Values) {
@@ -248,7 +268,7 @@ public:
 	template<typename T>
 	static T GetArrayField_Internal(const TArray<TSharedPtr<FJsonValue>>& JsonArrayValues) {
 		T Result;
-		
+
 		for (const auto& ArrayValue : JsonArrayValues) {
 			if constexpr (TIsSame<T::ElementType, int64>::Value) {
 				ensure(ArrayValue->Type == EJson::Number);
@@ -271,7 +291,13 @@ public:
 				const auto& JsonArray = ArrayValue->AsArray();
 				T::ElementType Res = GetArrayField_Internal<T::ElementType>(JsonArray);
 				Result.Emplace(MoveTemp(Res));
-				
+			}
+			else if constexpr (TIsDerivedFrom<T::ElementType, BaseObject>::Value) {
+				ensure(ArrayValue->Type == EJson::Object);
+				auto ResultObject = T::ElementType::FromJSON(ArrayValue->AsObject());
+				if (ResultObject) {
+					Result.Add(*ResultObject);
+				}
 			}
 		}
 

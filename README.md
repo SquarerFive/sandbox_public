@@ -5,13 +5,19 @@ various CLI utils for my projects
 
 This tool is used to generate a data structure with the relevant serializer/deserializers for a programming language.
 
+Schema version: 2020-12
+
 The syntax is defined using a config file,
 languages already supported are: 
 - Python 3: `python.json`
-- UE4 C++: `ue_cpp_config.json`
+- UE4 C++17: `ue_cpp_config.json`
 - Typescript: `typescript.json`
 
-Array data types are not supported yet!
+### Notes
+- Array of objects are not supported yet!
+- Only a small subset of the schema is currently supported.
+
+### Examples
 
 Generate Python code:
 
@@ -85,11 +91,19 @@ class TestObject :
     # enum-like value int
     variableE: int
 
-    def __init__(self, In_variableB: str, In_variableD: str, In_variableC: OtherTestObject, In_variableE: int, In_variableA: int = 24) :
+    # This is an array of integers
+    arrayVariable: typing.List[int]
+
+    # This is an array of arrays of integers
+    arrayOfArrays: typing.List[typing.List[int]]
+
+    def __init__(self, In_variableB: str, In_variableD: str, In_variableC: OtherTestObject, In_variableE: int, In_arrayVariable: typing.List[int], In_arrayOfArrays: typing.List[typing.List[int]], In_variableA: int = 24) :
         self.variableB = In_variableB
         self.variableD = In_variableD
         self.variableC = In_variableC
         self.variableE = In_variableE
+        self.arrayVariable = In_arrayVariable
+        self.arrayOfArrays = In_arrayOfArrays
         self.variableA = In_variableA
 
 
@@ -104,6 +118,8 @@ class TestObject :
         OutTestObjectJSON.set_object_field("variableC", OtherTestObject.to_json(InTestObject.variableC))
         OutTestObjectJSON.set_string_field("variableD", InTestObject.variableD)
         OutTestObjectJSON.set_integer_field("variableE", InTestObject.variableE)
+        OutTestObjectJSON.set_array_field("arrayVariable", InTestObject.arrayVariable)
+        OutTestObjectJSON.set_array_field("arrayOfArrays", InTestObject.arrayOfArrays)
         return OutTestObjectJSON
 
 
@@ -112,10 +128,12 @@ class TestObject :
         if InTestObjectJSON == None: return None
 
         return TestObject(InTestObjectJSON.get_string_field("variableB"),
-         InTestObjectJSON.get_string_field("variableD"),
-         OtherTestObject.from_json(InTestObjectJSON.get_object_field("variableC")),
-         InTestObjectJSON.get_integer_field("variableE"),
-         InTestObjectJSON.get_integer_field("variableA"))
+             InTestObjectJSON.get_string_field("variableD"),
+             OtherTestObject.from_json(InTestObjectJSON.get_object_field("variableC")),
+             InTestObjectJSON.get_integer_field("variableE"),
+             InTestObjectJSON.get_array_field("arrayVariable"),
+             InTestObjectJSON.get_array_field("arrayOfArrays"),
+             InTestObjectJSON.get_integer_field("variableA"))
 ```
 
 Generate UE4-compatible C++ code:
@@ -194,12 +212,16 @@ struct TestObject {
     // This is an array of integers
     TOptional<TArray<int64>> arrayVariable;
 
-    TestObject(const FString& In_variableB, const FString& In_variableD, const TOptional<OtherTestObject>& In_variableC, const TOptional<int64>& In_variableE, const TOptional<TArray<int64>>& In_arrayVariable, const TOptional<int64>& In_variableA = 24) {
+    // This is an array of arrays of integers
+    TOptional<TArray<TArray<int64>>> arrayOfArrays;
+
+    TestObject(const FString& In_variableB, const FString& In_variableD, const TOptional<OtherTestObject>& In_variableC, const TOptional<int64>& In_variableE, const TOptional<TArray<int64>>& In_arrayVariable, const TOptional<TArray<TArray<int64>>>& In_arrayOfArrays, const TOptional<int64>& In_variableA = 24) {
         this->variableB = In_variableB;
         this->variableD = In_variableD;
         this->variableC = In_variableC;
         this->variableE = In_variableE;
         this->arrayVariable = In_arrayVariable;
+        this->arrayOfArrays = In_arrayOfArrays;
         this->variableA = In_variableA;
     }
 
@@ -214,6 +236,7 @@ struct TestObject {
         UJson::SetStringField(OutTestObjectJSON, "variableD", InTestObject->variableD);
         UJson::SetIntegerField(OutTestObjectJSON,"variableE", InTestObject->variableE);
         UJson::SetArrayField(OutTestObjectJSON,"arrayVariable", InTestObject->arrayVariable);
+        UJson::SetArrayField(OutTestObjectJSON,"arrayOfArrays", InTestObject->arrayOfArrays);
         return OutTestObjectJSON;
     }
 
@@ -221,11 +244,12 @@ struct TestObject {
         RETURN_NULL_OBJECT_IF_NOT_EXIST(InTestObjectJSON)
 
         return TestObject(UJson::GetStringField(InTestObjectJSON,"variableB"),
-         UJson::GetStringField(InTestObjectJSON,"variableD"),
-         OtherTestObject::FromJSON(UJson::GetObjectFieldOpt(InTestObjectJSON,
-         "variableC")), UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
-         UJson::GetArrayFieldOpt<TArray<int64>>(InTestObjectJSON,"arrayVariable"),
-         UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"));
+             UJson::GetStringField(InTestObjectJSON,"variableD"),
+             OtherTestObject::FromJSON(UJson::GetObjectFieldOpt(InTestObjectJSON,
+             "variableC")), UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
+             UJson::GetArrayFieldOpt<TArray<int64>>(InTestObjectJSON,"arrayVariable"),
+             UJson::GetArrayFieldOpt<TArray<TArray<int64>>>(InTestObjectJSON,"arrayOfArrays"),
+             UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"));
     }
 };
 ```

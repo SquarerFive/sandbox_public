@@ -10,6 +10,7 @@ import textwrap
 
 import argparse
 
+
 class EncoderDecoderConfig(BaseModel):
     json_object_typename: str = "TSharedPtr<FJsonObject>"
     json_object_assign_value: str = "MakeShareable(new FJsonObject)"
@@ -51,13 +52,13 @@ class DataTypeConfig(BaseModel):
     object_typename: Optional[str] = None
     boolean_typename: str = "bool"
     array_typename: str = "TArray<{typename}>"
+    void_typename: str = "void"
 
 
 class CodeGenerationConfig(BaseModel):
     import_module_template: str = """#include "{module_name}" """
     imported_module_name_template: str = """{module_name}.h"""
     object_declaration_template: str = "struct {typename}"
-    
 
     statement_close: str = ";"
 
@@ -72,6 +73,9 @@ class CodeGenerationConfig(BaseModel):
 
     variable_postfix_reference_template: str = "&"
     variable_postfix_pointer_template: str = "*"
+
+    # Naming
+    input_argument_prefix: str = "In_"
 
     ## Enums & anyOf
     any_of_declaration_template: str = object_declaration_template
@@ -89,7 +93,10 @@ class CodeGenerationConfig(BaseModel):
     variable_assignment_close: str = statement_close
 
     method_declaration_template: str = "{qualifiers} {typename} {name}({args})"
+    static_method_declaration_template: str = "{qualifiers} {typename} {name}({args})"
+
     method_return_template: str = "return {name}"
+
     static_method_template: str = "static {method_declaration}"
 
     object_constructor_template: str = "{typename}({args})"
@@ -119,6 +126,17 @@ class CodeGenerationConfig(BaseModel):
     self_access: str = "this->{member_name}"
     mark_as_optional_with_default_value_in_args: bool = True
 
+    # Conditions
+    conditional_or = "||"
+    conditional_and = "&&"
+    conditional_equal = "=="
+    conditional_not = "!"
+    conditional_if_template = "if ({condition})"
+
+    # validation
+    throw_error_template: str = 'UE_LOG(LogTemp, Fatal, TEXT("{message}"))'
+    validate_method_name: str = "Validate"
+
 
 class Config(BaseModel):
     include_serializers_and_deserializers: bool = True
@@ -127,7 +145,9 @@ class Config(BaseModel):
     encoder_decoder_config: EncoderDecoderConfig = EncoderDecoderConfig()
     code_generation_config: CodeGenerationConfig = CodeGenerationConfig()
 
+
 DataTypeAlias = object
+
 
 class DataType:
     STRING = "STRING"
@@ -137,13 +157,15 @@ class DataType:
     BOOLEAN = "BOOLEAN"
     ARRAY = "ARRAY"
 
+    is_reference_to_object: bool = False
     child_data_type: DataTypeAlias = None
 
     value = None
+    ref_value = None
 
     def __init__(self, value: str):
         self.value = value
-    
+
     def __eq__(self, __o: object) -> bool:
         if isinstance(__o, DataType):
             return __o.value == self.value
@@ -164,6 +186,15 @@ class DataType:
             "array": DataType(DataType.ARRAY)
         }[string]
 
+    @staticmethod
+    def from_reference(string: str, spec):
+        spec: Spec = spec
+        dt = DataType(DataType.OBJECT)
+        dt.is_reference_to_object = True
+        dt.ref_value = spec.get_dependent_spec(
+            string.split("$ref:")[1]).title_to_typename()
+        return dt
+
     def resolve_data_type(self, spec) -> str:
         spec: Spec = spec
 
@@ -176,12 +207,15 @@ class DataType:
         elif self.value == DataType.INTEGER:
             result = spec.config.data_type_config.integer_typename
         elif self.value == DataType.OBJECT:
-            result = spec.config.data_type_config.object_typename
+            if self.is_reference_to_object:
+                result = self.ref_value
+            else:
+                result = spec.config.data_type_config.object_typename
         elif self.value == DataType.BOOLEAN:
             result = spec.config.data_type_config.boolean_typename
         elif self.value == DataType.ARRAY:
             result = spec.config.data_type_config.array_typename
-        
+
         return result
 
         # return {
@@ -192,6 +226,7 @@ class DataType:
         #     DataType.BOOLEAN: spec.config.data_type_config.boolean_typename,
         #     DataType.ARRAY: spec.config.data_type_config.array_typename
         # }[self]
+
 
 class Variable(BaseModel):
     name: str
@@ -229,12 +264,12 @@ class Variable(BaseModel):
         child = self.json_data_type.child_data_type
         while not has_no_child:
             child: DataType = child
-            typename = typename.format(typename = child.resolve_data_type(spec))
+            typename = typename.format(typename=child.resolve_data_type(spec))
 
             has_no_child = child.child_data_type == None
             if not has_no_child:
                 child = child.child_data_type
-        
+
         self.data_type = typename
 
     def resolve_signature(self,
@@ -275,7 +310,7 @@ class Variable(BaseModel):
             qualifiers.append(
                 spec.config.code_generation_config.qualifier_inline
             )
-        
+
         if static:
             qualifiers.append(
                 spec.config.code_generation_config.qualifier_static
@@ -301,7 +336,7 @@ class Variable(BaseModel):
         if self.default_value != None and include_assignment:
             body = spec.config.code_generation_config.variable_declaration_default_value_template.format(
                 variable_declaration=body,
-                value=self.default_value if not self.json_data_type == DataType.STRING else f'"{self.default_value}"'
+                value=self.default_value #if not self.json_data_type == DataType.STRING else f'"{self.default_value}"'
             )
 
         if close_declaration:
@@ -325,15 +360,24 @@ class Variable(BaseModel):
 
         return spec.config.code_generation_config.construct_object_template.format(typename=self.data_type, args=args)
 
+    def resolve_default_value(self):
+        if self.default_value != None:
+            if self.json_data_type == DataType.STRING:
+                self.default_value = f'"{self.default_value}"'
+
 class AnyOf(BaseModel):
     typename: str
     possible_values: List[Variable]
+    reference_variable: Variable
 
     def resolve(self, spec):
         spec: Spec = spec
 
-        body = spec.config.code_generation_config.any_of_declaration_template.format(typename = self.typename) + " "
+        body = spec.config.code_generation_config.any_of_declaration_template.format(
+            typename=self.typename)
         body += spec.config.code_generation_config.object_scope_character_open
+
+        [v.resolve_default_value() for v in self.possible_values]
 
         values = '\n'.join([
             v.resolve_signature(spec, True, False, False, True, True, True, True) for v in self.possible_values
@@ -342,8 +386,27 @@ class AnyOf(BaseModel):
 
         body += "\n" + spec.config.code_generation_config.object_scope_character_close
 
-        return body
+        self.reference_variable.default_value = spec.config.code_generation_config.static_accessor.format(
+            typename = self.typename,
+            member_name = self.possible_values[0].name
+        )
 
+        return body
+    
+    def resolve_validator(self, spec):
+        spec: Spec = spec
+
+        condition = spec.config.code_generation_config.conditional_or.join([
+            spec.config.code_generation_config.self_access.format(member_name = self.reference_variable.name) + spec.config.code_generation_config.conditional_equal + \
+                spec.config.code_generation_config.static_accessor.format(
+                    typename = self.typename,
+                    member_name = v.name
+                ) for v in self.possible_values
+        ])
+
+        error_message = f'Failed to validate field {self.reference_variable.name}!'
+
+        return condition, error_message
 
 class Spec:
     def __init__(self, spec: dict, context_directory: str, config: Config = Config()):
@@ -353,6 +416,7 @@ class Spec:
 
         self.variables: List[Variable] = []
         self.required_variable_names: List[str] = []
+        self.any_of_variables: List[AnyOf] = []
         self.config = config
 
     def get_dependent_spec(self, ref: str):
@@ -390,14 +454,14 @@ class Spec:
         sorted_variables = self.sorted_variables
 
         def format_name_fn(name: str) -> str:
-            return f"In_{name}"
+            return f"{self.config.code_generation_config.input_argument_prefix}{name}"
 
         context_variables = [
             v for v in sorted_variables if v.name in self.required_variable_names or not only_required
         ]
 
         input_signatures = [
-            v.resolve_signature(self, True, True, close_declaration=False, format_name_fn=format_name_fn, is_arg = True) for v in context_variables
+            v.resolve_signature(self, True, True, close_declaration=False, format_name_fn=format_name_fn, is_arg=True) for v in context_variables
         ]
 
         body = self.config.code_generation_config.object_constructor_template.format(
@@ -405,14 +469,20 @@ class Spec:
             args=', '.join(input_signatures)
         )
 
-        body += " "+self.config.code_generation_config.scope_character_open + "\n"
+        body += self.config.code_generation_config.scope_character_open + "\n"
 
         for i, variable in enumerate(context_variables):
             body += self.indent(
-                self.config.code_generation_config.self_access.format(member_name=variable.resolve_assignment(self, "In_"+variable.name)), 1
+                self.config.code_generation_config.self_access.format(member_name=variable.resolve_assignment(
+                    self, self.config.code_generation_config.input_argument_prefix+variable.name)), 1
             )
             if i < len(context_variables):
                 body += "\n"
+
+        if self.has_validator():
+            body += "\n"
+            body += self.indent(self.call_method(self.config.code_generation_config.validate_method_name) , 1)
+            body += "\n"
 
         body += self.config.code_generation_config.scope_charater_close + "\n"
 
@@ -429,7 +499,7 @@ class Spec:
             self.required_variable_names = self.spec.get("required", [])
             properties = self.spec['properties']
 
-            any_of_variables = []
+            self.any_of_variables = []
 
             for variableName in properties:
                 variable_property: dict = properties[variableName]
@@ -445,11 +515,13 @@ class Spec:
                             for v in variable_property["anyOf"]:
                                 if v.get("const") != None:
                                     variable = Variable(
-                                        name = v['const'] if v.get("name") == None else v["name"],
+                                        name=v['const'] if v.get(
+                                            "name") == None else v["name"],
                                         description="",
-                                        json_data_type=DataType.from_string(found_type),
-                                        required = True,
-                                        default_value = v['const']
+                                        json_data_type=DataType.from_string(
+                                            found_type),
+                                        required=True,
+                                        default_value=v['const']
                                     )
                                     possible_values.append(variable)
 
@@ -462,26 +534,43 @@ class Spec:
 
                         def collect_types(data: dict, in_types: List[str]) -> List[str]:
                             if data.get("items"):
-                                in_types.append(data["items"]["type"])
-                                return collect_types(data["items"], in_types)
+                                if data["items"].get("type"):
+                                    in_types.append(data["items"]["type"])
+                                    return collect_types(data["items"], in_types)
+                                else:
+                                    if data["items"].get("$ref"):
+                                        in_types.append(
+                                            f"$ref:{data['items']['$ref']}")
+                                    else:
+                                        raise Exception("Invalid property!")
 
                         collect_types(variable_property, types)
                         return types, []
                     else:
                         return [variable_property["type"]], []
-                
+
                 variable_types, possible_values = resolve_variable_type_and_possible_values()
 
-                data_type: DataType = DataType.from_string(variable_types[0] if variable_types[0] != None else 'object')
+                if variable_types[0] != None and '$ref' in variable_types[0]:
+                    data_type: DataType = DataType.from_reference(
+                        variable_types[0], self)
+                else:
+                    data_type: DataType = DataType.from_string(
+                        variable_types[0] if variable_types[0] != None else 'object')
+
                 if len(variable_types) > 1:
                     root_data_type = data_type
                     for variable_type in variable_types[1:]:
-                        child_data_type = DataType.from_string(variable_type)
+                        if '$ref' in variable_type:
+                            child_data_type = DataType.from_reference(
+                                variable_type, self)
+                        else:
+                            child_data_type = DataType.from_string(
+                                variable_type)
                         root_data_type.child_data_type = child_data_type
                         root_data_type = child_data_type
 
-                if len(possible_values) > 0:
-                    any_of_variables.append(AnyOf(typename = variableName.upper(), possible_values = possible_values))
+                
 
                 variable = Variable(
                     name=variableName,
@@ -491,22 +580,30 @@ class Spec:
                     default_value=variable_property.get("default"),
                     reference_type=variable_property.get("$ref")
                 )
+
+                variable.resolve_default_value()
+
                 variable.resolve_signature(self)
+
+                if len(possible_values) > 0:
+                    self.any_of_variables.append(
+                        AnyOf(typename=variableName.upper(), possible_values=possible_values, reference_variable = variable))
+
                 self.variables.append(variable)
 
-            self.body += f"{self.config.code_generation_config.object_declaration_template.format(typename = self_name)} {self.config.code_generation_config.object_scope_character_open}{self.indent(self.resolve_description(), 1)}\n\n"
+            self.body += f"{self.config.code_generation_config.object_declaration_template.format(typename = self_name)}{self.config.code_generation_config.object_scope_character_open}{self.indent(self.resolve_description(), 1)}\n"
 
             # self.body += self.indent(self.resolve_constructor(True), 1)+'\n\n'
-            
+
             if not self.config.code_generation_config.declare_anyof_outside_self:
-                for var in any_of_variables:
+                for var in self.any_of_variables:
                     self.body += self.indent(var.resolve(self), 1)+"\n"
             else:
                 b = ""
-                for var in any_of_variables:
+                for var in self.any_of_variables:
                     b += self.indent(var.resolve(self), 0)+"\n\n"
                 self.body = b + self.body
-            
+
             self.body += "\n"
 
             for var in self.variables:
@@ -522,10 +619,60 @@ class Spec:
                 self.body += "\n\n"
                 self.body += self.indent(self.create_json_decoder(), 1)
                 self.body += "\n"
+                if self.has_validator():
+                    self.body += "\n"
+                    self.body += self.indent(self.create_validator(), 1)
+                    self.body += "\n"
 
             self.body += self.config.code_generation_config.object_scope_character_close + "\n\n"
 
             return self.body
+
+    def call_method(self, method_name: str, args: List[Variable] = [], is_static: bool = False):
+        if not is_static:
+            return self.config.code_generation_config.self_access.format(
+                member_name = method_name
+            ) + f"({', '.join([self.config.code_generation_config.self_access.format(member_name = v.name) for v in args])})" \
+                + self.config.code_generation_config.statement_close
+        
+        return self.config.code_generation_config.static_accessor.format(
+            typename = self.title_to_typename(),
+            member_name = method_name
+        ) + f"({', '.join([self.config.code_generation_config.self_access.format(member_name = v.name) for v in args])})" \
+            + self.config.code_generation_config.statement_close
+            
+
+    def has_validator(self):
+        return len(self.any_of_variables) > 0 and self.config.include_serializers_and_deserializers
+
+    def create_validator(self):
+        body = """"""
+
+        body += self.config.code_generation_config.method_declaration_template.format(
+            typename = self.config.data_type_config.void_typename,
+            name = self.config.code_generation_config.validate_method_name,
+            qualifiers = "",
+            args = ""
+        ).strip()
+
+        body += self.config.code_generation_config.scope_character_open + "\n"
+        
+        for any_of in self.any_of_variables:
+            assert_statement = ""
+            condition, error_message = any_of.resolve_validator(self)
+            assert_statement += self.config.code_generation_config.conditional_if_template\
+                .format(condition = f'{self.config.code_generation_config.conditional_not}({condition})')
+            assert_statement += self.config.code_generation_config.scope_character_open + "\n"
+            assert_statement += self.indent(
+                self.config.code_generation_config.throw_error_template.format(message = error_message), 1
+            ) + self.config.code_generation_config.statement_close + "\n"
+            assert_statement += self.config.code_generation_config.scope_charater_close + "\n"
+
+            body += self.indent(assert_statement, 1)
+
+        body += self.config.code_generation_config.scope_charater_close
+
+        return body
 
     def create_json_encoder(self):
         self_typename = self.title_to_typename()
@@ -556,22 +703,21 @@ class Spec:
             default_value=self.config.encoder_decoder_config.json_object_assign_value
         )
 
-        body = self.config.code_generation_config.method_declaration_template.format(
+        body = self.config.code_generation_config.static_method_declaration_template.format(
             qualifiers="",
             typename=_optional_json_object_variable.resolve_signature(
                 self, include_assignment=False, include_name=False, close_declaration=False
             ),
             name=self.config.encoder_decoder_config.json_encode_method_name,
             args=self_as_variable.resolve_signature(
-                self, True, True, close_declaration=False, include_assignment=False, typename_override=\
-                    None if self.config.code_generation_config.allow_self_type_in_args else self.config.code_generation_config.any_type
+                self, True, True, close_declaration=False, include_assignment=False, typename_override=None if self.config.code_generation_config.allow_self_type_in_args else self.config.code_generation_config.any_type
             )
         ).strip()
 
         body = self.config.code_generation_config.static_method_template.format(
             method_declaration=body)
 
-        body += " "+self.config.code_generation_config.scope_character_open + "\n"
+        body += self.config.code_generation_config.scope_character_open + "\n"
 
         body += self.indent(self.config.encoder_decoder_config.return_null_object_if_not_exist.format(
             name=self_as_variable.name), 1) + "\n"
@@ -634,7 +780,7 @@ class Spec:
             default_value=self.config.encoder_decoder_config.json_object_assign_value
         )
 
-        body = self.config.code_generation_config.method_declaration_template.format(
+        body = self.config.code_generation_config.static_method_declaration_template.format(
             qualifiers="",
             typename=self_as_variable.resolve_signature(
                 self, close_declaration=False, include_assignment=False, include_name=False),
@@ -647,7 +793,7 @@ class Spec:
         body = self.config.code_generation_config.static_method_template.format(
             method_declaration=body)
 
-        body += " "+self.config.code_generation_config.scope_character_open + "\n"
+        body += self.config.code_generation_config.scope_character_open + "\n"
 
         body += self.indent(self.config.encoder_decoder_config.return_null_object_if_not_exist.format(
             name=json_object_variable.name), 1) + "\n"
@@ -672,7 +818,8 @@ class Spec:
         }
 
         construction_args = ', '.join([
-            (json_get_mappings[v.json_data_type.value] if v.required else json_get_opt_mappings[v.json_data_type.value])
+            (json_get_mappings[v.json_data_type.value]
+             if v.required else json_get_opt_mappings[v.json_data_type.value])
             .format(
                 name=json_object_variable.name,
                 variable_name=v.name,
@@ -681,8 +828,7 @@ class Spec:
             ) for v in sorted_variables])
 
         return_value = f'\n{self.config.code_generation_config.scope_indent_character}'.join(
-            textwrap.wrap(self_as_variable.resolve_constructor(self, construction_args), 75, subsequent_indent=\
-                self.config.code_generation_config.scope_indent_character*4, fix_sentence_endings=True, break_long_words=False))
+            textwrap.wrap(self_as_variable.resolve_constructor(self, construction_args), 75, subsequent_indent=self.config.code_generation_config.scope_indent_character*4, fix_sentence_endings=True, break_long_words=False))
         return_value += self.config.code_generation_config.statement_close
         return_value = self.indent(
             self.config.code_generation_config.method_return_template.format(name=return_value), 1)
@@ -697,9 +843,12 @@ class Spec:
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input-file", action = "store", required= True, type = str)
-    parser.add_argument("-c", "--config-file", action = "store", required= True, type = str)
-    parser.add_argument("-o", "--output-file", action = "store", required= True, type = str)
+    parser.add_argument("-i", "--input-file",
+                        action="store", required=True, type=str)
+    parser.add_argument("-c", "--config-file",
+                        action="store", required=True, type=str)
+    parser.add_argument("-o", "--output-file",
+                        action="store", required=True, type=str)
 
     args = parser.parse_args()
 
@@ -724,7 +873,7 @@ if __name__ == "__main__":
 
     source += "\n\n"
 
-    spec = Spec(data, spec_dir, config = config)
+    spec = Spec(data, spec_dir, config=config)
 
     for dependent_spec in spec.get_dependencies():
         with open(os.path.join(spec_dir, dependent_spec), 'r') as f:

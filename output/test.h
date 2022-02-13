@@ -7,15 +7,15 @@
 #include "UnrealJSONUtilities.h" 
 
 
-struct OtherTestObject {
+struct OtherTestObject : public BaseObject {
     // This is another test object
-
 
     // Number of items
     TOptional<int64> count;
 
     OtherTestObject(const TOptional<int64>& In_count) {
         this->count = In_count;
+
     }
 
     // JSON Encoders/Decoders
@@ -34,9 +34,8 @@ struct OtherTestObject {
     }
 };
 
-struct TestObject {
+struct TestObject : public BaseObject {
     // This is a test object
-
     struct VARIABLED {
         inline static const FString ABC = "ABC";
         inline static const FString XYZ = "XYZ";
@@ -57,10 +56,10 @@ struct TestObject {
     TOptional<OtherTestObject> variableC;
 
     // enum-like value
-    FString variableD;
+    FString variableD = VARIABLED::ABC;
 
     // enum-like value int
-    TOptional<int64> variableE;
+    TOptional<int64> variableE = VARIABLEE::LOW;
 
     // This is an array of integers
     TOptional<TArray<int64>> arrayVariable;
@@ -68,14 +67,20 @@ struct TestObject {
     // This is an array of arrays of integers
     TOptional<TArray<TArray<int64>>> arrayOfArrays;
 
-    TestObject(const FString& In_variableB, const FString& In_variableD, const TOptional<OtherTestObject>& In_variableC, const TOptional<int64>& In_variableE, const TOptional<TArray<int64>>& In_arrayVariable, const TOptional<TArray<TArray<int64>>>& In_arrayOfArrays, const TOptional<int64>& In_variableA = 24) {
+    // This is an array of objects
+    TOptional<TArray<OtherTestObject>> arrayOfObjects;
+
+    TestObject(const FString& In_variableB, const TOptional<OtherTestObject>& In_variableC, const TOptional<TArray<int64>>& In_arrayVariable, const TOptional<TArray<TArray<int64>>>& In_arrayOfArrays, const TOptional<TArray<OtherTestObject>>& In_arrayOfObjects, const TOptional<int64>& In_variableA = 24, const FString& In_variableD = VARIABLED::ABC, const TOptional<int64>& In_variableE = VARIABLEE::LOW) {
         this->variableB = In_variableB;
-        this->variableD = In_variableD;
         this->variableC = In_variableC;
-        this->variableE = In_variableE;
         this->arrayVariable = In_arrayVariable;
         this->arrayOfArrays = In_arrayOfArrays;
+        this->arrayOfObjects = In_arrayOfObjects;
         this->variableA = In_variableA;
+        this->variableD = In_variableD;
+        this->variableE = In_variableE;
+
+        this->Validate();
     }
 
     // JSON Encoders/Decoders
@@ -90,6 +95,7 @@ struct TestObject {
         UJson::SetIntegerField(OutTestObjectJSON,"variableE", InTestObject->variableE);
         UJson::SetArrayField(OutTestObjectJSON,"arrayVariable", InTestObject->arrayVariable);
         UJson::SetArrayField(OutTestObjectJSON,"arrayOfArrays", InTestObject->arrayOfArrays);
+        UJson::SetArrayField(OutTestObjectJSON,"arrayOfObjects", InTestObject->arrayOfObjects);
         return OutTestObjectJSON;
     }
 
@@ -97,12 +103,23 @@ struct TestObject {
         RETURN_NULL_OBJECT_IF_NOT_EXIST(InTestObjectJSON)
 
         return TestObject(UJson::GetStringField(InTestObjectJSON,"variableB"),
-             UJson::GetStringField(InTestObjectJSON,"variableD"),
              OtherTestObject::FromJSON(UJson::GetObjectFieldOpt(InTestObjectJSON,
-             "variableC")), UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"),
+             "variableC")),
              UJson::GetArrayFieldOpt<TArray<int64>>(InTestObjectJSON,"arrayVariable"),
              UJson::GetArrayFieldOpt<TArray<TArray<int64>>>(InTestObjectJSON,"arrayOfArrays"),
-             UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"));
+             UJson::GetArrayFieldOpt<TArray<OtherTestObject>>(InTestObjectJSON,"arrayOfObjects"),
+             UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableA"),
+             UJson::GetStringField(InTestObjectJSON,"variableD"),
+             UJson::GetIntegerFieldOpt(InTestObjectJSON,"variableE"));
+    }
+
+    void Validate() {
+        if (!(this->variableD==VARIABLED::ABC||this->variableD==VARIABLED::XYZ)) {
+            UE_LOG(LogTemp, Fatal, TEXT("Failed to validate field variableD!"));
+        }
+        if (!(this->variableE==VARIABLEE::LOW||this->variableE==VARIABLEE::HIGH)) {
+            UE_LOG(LogTemp, Fatal, TEXT("Failed to validate field variableE!"));
+        }
     }
 };
 
