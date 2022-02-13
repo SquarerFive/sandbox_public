@@ -13,12 +13,12 @@ export class OtherTestObject {
 
 }
 
-export class VARIABLED {
+class VARIABLED {
     static ABC: string = "ABC";
     static XYZ: string = "XYZ";
 }
 
-export class VARIABLEE {
+class VARIABLEE {
     static LOW: number = 2;
     static HIGH: number = 4;
 }
@@ -60,7 +60,18 @@ export class TestObject {
         this.variableA = In_variableA;
         this.variableD = In_variableD;
         this.variableE = In_variableE;
+
+        this.Validate()
     }
 
+
+    Validate(): void {
+        if (!(this.variableD==VARIABLED.ABC||this.variableD==VARIABLED.XYZ)) {
+            console.error("Failed to validate field variableD!")
+        }
+        if (!(this.variableE==VARIABLEE.LOW||this.variableE==VARIABLEE.HIGH)) {
+            console.error("Failed to validate field variableE!")
+        }
+    }
 }
 

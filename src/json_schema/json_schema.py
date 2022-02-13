@@ -136,6 +136,7 @@ class CodeGenerationConfig(BaseModel):
     # validation
     throw_error_template: str = 'UE_LOG(LogTemp, Fatal, TEXT("{message}"))'
     validate_method_name: str = "Validate"
+    add_validator: bool = True
 
 
 class Config(BaseModel):
@@ -619,10 +620,11 @@ class Spec:
                 self.body += "\n\n"
                 self.body += self.indent(self.create_json_decoder(), 1)
                 self.body += "\n"
-                if self.has_validator():
-                    self.body += "\n"
-                    self.body += self.indent(self.create_validator(), 1)
-                    self.body += "\n"
+                
+            if self.has_validator():
+                self.body += "\n"
+                self.body += self.indent(self.create_validator(), 1)
+                self.body += "\n"
 
             self.body += self.config.code_generation_config.object_scope_character_close + "\n\n"
 
@@ -643,7 +645,7 @@ class Spec:
             
 
     def has_validator(self):
-        return len(self.any_of_variables) > 0 and self.config.include_serializers_and_deserializers
+        return len(self.any_of_variables) > 0 and self.config.code_generation_config.add_validator
 
     def create_validator(self):
         body = """"""

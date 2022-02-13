@@ -39,7 +39,7 @@
         "import_module_template": "import {module_name}",
         "imported_module_name_template": "{module_name}.h",
         "object_declaration_template": "export class {typename}",
-        "any_of_declaration_template": "export class {typename}",
+        "any_of_declaration_template": "class {typename}",
         "statement_close": "",
         "qualifier_const": "",
         "qualifier_inline": "",
@@ -52,7 +52,7 @@
         "variable_declaration_close": ";",
         "variable_assignment_template": "{name} = {value}",
         "variable_assignment_close": ";",
-        "method_declaration_template": "function {name}({args})",
+        "method_declaration_template": "{name}({args}): {typename}",
         "method_return_template": "return {name}",
         "static_method_template": "{method_declaration}",
         "construct_object_template": "new {typename}({args})",
@@ -77,7 +77,8 @@
         "self_access": "this.{member_name}",
 
         "declare_anyof_outside_self": true,
-        "mark_as_optional_with_default_value_in_args": false
+        "mark_as_optional_with_default_value_in_args": false,
+        "throw_error_template": "console.error(\"{message}\")"
     },
 
     "include_serializers_and_deserializers": false
