@@ -1,5 +1,4 @@
 # THIS IS A GENERATED FILE! DO NOT EDIT!
-import json
 import PythonJSONUtilities
 import pydantic
 import typing
@@ -15,7 +14,7 @@ class VARIABLEE:
     HIGH: int = 4
 
 
-class TestObject:
+class TestObject(pydantic.BaseModel):
     # This is a test object
 
     # This property represents an integer. It is not

@@ -1,11 +1,10 @@
 # THIS IS A GENERATED FILE! DO NOT EDIT!
-import json
 import PythonJSONUtilities
 import pydantic
 import typing
 
 
-class OtherTestObject:
+class OtherTestObject(pydantic.BaseModel):
     # This is another test object
 
     # Number of items

@@ -42,7 +42,7 @@
         "import_module_template": "import {module_name}",
         "imported_module_name_template": "{module_name}.h",
         "import_all_template": "from {module_name} import *",
-        "object_declaration_template": "class {typename}",
+        "object_declaration_template": "class {typename}(pydantic.BaseModel)",
         "any_of_declaration_template": "class {typename}",
         "statement_close": "",
         "qualifier_const": "",
@@ -70,7 +70,6 @@
         "scope_indent_character": " ",
         "comment_character": "#",
         "module_imports": [
-            "json",
             "PythonJSONUtilities",
             "pydantic",
             "typing"
