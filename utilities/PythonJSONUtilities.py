@@ -3,12 +3,15 @@
 import json
 from typing import *
 
-class JsonUtilities:
-    def __init__(self, data: Optional[dict] = {}):
-        self.data = data
+class JsonUtilities(object):
+    def __init__(self, data: Optional[dict] = None):
+        if data == None:
+            self.data = dict()
+        else:
+            self.data = data
     
     def validate_type(self, variable: Any, type: Type):
-        assert isinstance(variable, type), f"Variable must be of type {variable}"
+        assert isinstance(variable, type), f"Variable must be of type {type}"
     
     def get_string_field(self, field_name: str) -> Optional[str]:
         if self.data.get(field_name):
@@ -35,6 +38,11 @@ class JsonUtilities:
             self.validate_type(self.data[field_name], list)
             return self.data[field_name]
     
+    def get_object_field(self, field_name: str) -> Optional[object]:
+        if self.data.get(field_name):
+            self.validate_type(self.data[field_name], dict )
+            return JsonUtilities(self.data[field_name])
+    
     def set_string_field(self, field_name: str, value: Optional[str]):
         if value != None:
             self.validate_type(value, str)
@@ -54,6 +62,11 @@ class JsonUtilities:
         if value != None:
             self.validate_type(value, bool)
             self.data[field_name] = value
+    
+    def set_object_field(self, field_name: str, value: Optional[object]):
+        if value != None:
+            self.validate_type(value, JsonUtilities)
+            self.data[field_name] = value.data
     
     def set_array_field(self, field_name: str, value: List[Any]):
         if value != None:

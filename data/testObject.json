@@ -4,11 +4,21 @@
     "variableC": {
         "count": 4
     },
-    "variableD": "Test",
+    "variableD": "ABC",
     "variableE": 2,
     "arrayVariable": [1, 2, 3, 4, 5],
     "arrayOfArrays": [
         [1, 2, 3, 4, 5],
         [1, 2, 3, 4, 5]
+    ],
+    "arrayOfObjects": [{
+            "count": 4
+        },
+        {
+            "count": 8
+        },
+        {
+            "count": 12
+        }
     ]
 }
